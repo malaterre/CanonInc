@@ -73,11 +73,17 @@ struct info
     uint32_t junk7[12];
     char str22[0x3630 - 0x35EC];
     char str23[0x3674 - 0x3630];
+    uint32_t junk8[19];
+    char str24[0x3AD0 - 0x36C0];
+    uint32_t junk9[5];
+    char str25[0x493B - 0x3AE4];
 };
 
 static void process_canon(FILE* stream, const char* data, size_t size)
 {
     const size_t SIZE = 18748; // 4687 * 4
+    const size_t s = sizeof(struct info);
+    assert(s==SIZE);
     struct info* pinfo = malloc(sizeof(struct info));
     if (!pinfo)
     {
@@ -123,6 +129,10 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     my_print_u32(stream, pinfo->junk7, sizeof(pinfo->junk7));
     my_print(stream, "str22", pinfo->str22, sizeof(pinfo->str22));
     my_print(stream, "str23", pinfo->str23, sizeof(pinfo->str23));
+    my_print_u32(stream, pinfo->junk8, sizeof(pinfo->junk8));
+    my_print(stream, "str24", pinfo->str24, sizeof(pinfo->str24));
+    my_print_u32(stream, pinfo->junk9, sizeof(pinfo->junk9));
+    my_print(stream, "str25", pinfo->str25, sizeof(pinfo->str25));
 }
 
 int main(int argc, char* argv[])
