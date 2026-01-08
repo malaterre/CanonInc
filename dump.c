@@ -38,7 +38,12 @@ void my_print_u32(FILE* stream, const uint32_t* d, size_t len)
 
 struct info
 {
+#if 0
     char magic[0x320 /* 800 */];
+#else
+    char magic[0x8D - 0x00];
+    char str31[0x320 - 0x8D];
+#endif
     char ip[0x40 /* 64 */];
     uint32_t junk1[1];
     char flags[0x41];
@@ -71,7 +76,14 @@ struct info
 #if 0
     char zeros2[0x34A4 - 0x3058];
 #else
+#if 0
     char zeros2[0x31E4 - 0x3058];
+#else
+    char zeros2[1];
+    char str32[0x309C - 0x3059];
+    char str33[0X30E0 - 0x309C];
+    char str34[0X31E4 - 0X30E0];
+#endif
     uint32_t j[10];
     char p[1];
     char str26[0x3250 - 0x320D];
@@ -82,7 +94,12 @@ struct info
 #if 0
     char str21[0x35BC - 0x34A4];
 #else
+#if 0
     char str21[0x3570 - 0x34A4];
+#else
+    char str21[0x352C - 0x34A4];
+    char str35[0x3570 - 0x352C];
+#endif
     char str30[0x35B8 - 0x3570];
     uint32_t junk10[1];
 #endif
