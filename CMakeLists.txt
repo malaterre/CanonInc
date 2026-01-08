@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.15)
+project(canon)
+add_executable(dump dump.c)
+if(MSVC)
+target_compile_definitions(dump PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
