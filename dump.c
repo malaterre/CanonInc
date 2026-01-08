@@ -8,11 +8,13 @@ struct info
 {
     char magic[0x320 /* 800 */];
     char ip[0x40 /* 64 */];
-    uint32_t junk1;
+    uint32_t junk1[1];
     char flags[0x41];
-    char str1[ 0x4A8 - 0x3A5 ];
-    uint32_t junk2;
-    //    uint32_t junk2[5];
+    char str1[0x103];
+    uint32_t junk2[1];
+    char str2[0x10 + 448];
+    uint32_t junk3[5];
+    char str3[0x30];
 };
 
 int is_buffer_all_zero(const char* buffer, const size_t size)
@@ -32,12 +34,19 @@ void my_print(FILE* stream, const char* name, const char* str, const size_t len)
     const size_t l = strlen(str);
     const int ret = is_buffer_all_zero(str + l, len - l);
     assert(ret == 1);
-    fprintf(stream, "%s: [%s]\n",name, str);
+    fprintf(stream, "%s: [%s]\n", name, str);
 }
 
-void my_print_u32(FILE* stream, const uint32_t d)
+void my_print_u32(FILE* stream, const uint32_t* d, size_t len)
 {
-    fprintf(stream, "%x\n", d);
+    const size_t n = len / sizeof(uint32_t);
+    for (int i = 0; i < n; ++i)
+    {
+        if (i)
+            fprintf(stream, " ");
+        fprintf(stream, "%x", d[i]);
+    }
+    fprintf(stream, "\n");
 }
 
 static void process_canon(FILE* stream, const char* data, size_t size)
@@ -53,11 +62,15 @@ static void process_canon(FILE* stream, const char* data, size_t size)
 
     my_print(stream, "magic", pinfo->magic, sizeof(pinfo->magic));
     my_print(stream, "ip", pinfo->ip, sizeof(pinfo->ip));
-    my_print_u32(stream, pinfo->junk1);
+    my_print_u32(stream, pinfo->junk1, sizeof(pinfo->junk1));
     my_print(stream, "hostname", pinfo->flags, sizeof(pinfo->flags));
     my_print(stream, "flags", pinfo->str1, sizeof(pinfo->str1));
-    my_print_u32(stream, pinfo->junk2);
-    assert( pinfo->junk2 == 0x2);
+    my_print_u32(stream, pinfo->junk2, sizeof(pinfo->junk2));
+    assert(pinfo->junk2[0] == 0x2);
+    const int ret = is_buffer_all_zero(pinfo->str2, sizeof(pinfo->str2));
+    assert(ret==1);
+    my_print_u32(stream, pinfo->junk3, sizeof(pinfo->junk3));
+    my_print(stream, "str3", pinfo->str3, sizeof(pinfo->str3));
 }
 
 int main(int argc, char* argv[])
