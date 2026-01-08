@@ -67,15 +67,31 @@ struct info
     char str19[0x2ff4 - 0x2df0 - 4];
     uint32_t junk5[1];
     char str20[0x3034 - 0x2ff4];
-    uint32_t junk6[11 - 2];
+    uint32_t junk6[9];
+#if 0
     char zeros2[0x34A4 - 0x3058];
+#else
+    char zeros2[0x31E4 - 0x3058];
+    uint32_t j[10];
+    char p[1];
+    char str26[0x3250 - 0x320D];
+    char str27[0x3294 - 0x3250];
+    char str28[0x339C - 0x3294];
+    char str29[0x34A4 - 0x339C]; // fixme
+#endif
+#if 0
     char str21[0x35BC - 0x34A4];
+#else
+    char str21[0x3570 - 0x34A4];
+    char str30[0x35B8 - 0x3570];
+    uint32_t junk10[1];
+#endif
     uint32_t junk7[12];
     char str22[0x3630 - 0x35EC];
     char str23[0x3674 - 0x3630];
     uint32_t junk8[19];
-    char str24[0x3AD0 - 0x36C0];
-    uint32_t junk9[5];
+    char str24[0x3AD0 - 0x36C0 - 8];
+    uint32_t junk9[5 + 2];
     char str25[0x493B - 0x3AE4];
 };
 
