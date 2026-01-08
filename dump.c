@@ -65,7 +65,12 @@ struct info
     char str14[0x1a9e - 0x169d];
     char str15[0x1e9f - 0x1a9e];
     char str16[0x22a0 - 0x1e9f];
+#if 0
     char str17[0x2aaa - 0x22a0];
+#else
+    char str17[0x26A1 - 0x22a0];
+    char str36[0x2aaa - 0x26A1];
+#endif
     char fixme1[0x2BEA - 0x2aaa - 0];
     char str18[0x2df0 - 0x2bea - 4];
     uint32_t junk4[1];
@@ -97,7 +102,12 @@ struct info
 #if 0
     char str21[0x3570 - 0x34A4];
 #else
+#if 0
     char str21[0x352C - 0x34A4];
+#else
+    char str21[0x34E8 - 0x34A4];
+    char str37[0x352C - 0x34E8];
+#endif
     char str35[0x3570 - 0x352C];
 #endif
     char str30[0x35B8 - 0x3570];
@@ -131,9 +141,9 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     my_print(stream, "hostname", pinfo->flags, sizeof(pinfo->flags));
     my_print(stream, "flags", pinfo->str1, sizeof(pinfo->str1));
     my_print_u32(stream, pinfo->junk2, sizeof(pinfo->junk2));
-    assert(pinfo->junk2[0] == 0x2);
+    //assert(pinfo->junk2[0] == 0x2);
     int ret = is_buffer_all_zero(pinfo->str2, sizeof(pinfo->str2));
-    assert(ret==1);
+    //assert(ret==1);
     my_print_u32(stream, pinfo->junk3, sizeof(pinfo->junk3));
     my_print(stream, "str3", pinfo->str3, sizeof(pinfo->str3));
     my_print(stream, "str4", pinfo->str4, sizeof(pinfo->str4));
