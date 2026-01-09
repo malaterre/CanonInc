@@ -125,17 +125,23 @@ struct info_common
     uint32_t junk7[1];
     char versions[0x3034 - 0x2ff4];
     uint32_t junk8[9];
+    /* start endpoint */
     char ip4_2[0x309C - 0x3059 + 1];
     char hostname3[0X30E0 - 0x309C];
     char flags4[0X31E4 - 0X30E0];
     uint32_t value1[1];
+    uint32_t two_states4[1]; // 0 or 2
+    /* end endpoint */
     uint32_t two_states5[1]; // 0 or 2
-    uint32_t junk9[10 - 2];
+    uint32_t junk9[10 - 3];
+    /* start endpoint */
     char ip4_3[0x3250 - 0x320D + 1];
     char service_name1[0x3294 - 0x3250];
     char flags5[0x3398 - 0x3294 + 4];
-    uint32_t two_states4[1]; // 0 or 2
-    uint32_t junk10[48 - 2];
+    uint32_t two_states6[1]; // 0 or 2
+    /* end endpoint */
+    uint32_t two_states7[1]; // 0 or 2
+    uint32_t junk10[48 - 3];
     char service_name2[0x34A4 - 0x3458];
     char aetitle1[0x34E8 - 0x34A4];
     char aetitle3[0x352C - 0x34E8];
@@ -249,6 +255,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     MY_PRINT(stream, pinfo, hostname3);
     MY_PRINT(stream, pinfo, flags4);
     MY_PRINT2(stream, pinfo, value1);
+    MY_PRINT2(stream, pinfo, two_states4);
     MY_PRINT2(stream, pinfo, two_states5);
     MY_PRINT2(stream, pinfo, junk9);
     //    ret = is_buffer_all_zero(pinfo->zeros3, sizeof(pinfo->zeros3));
@@ -256,7 +263,8 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     MY_PRINT(stream, pinfo, ip4_3);
     MY_PRINT(stream, pinfo, service_name1);
     MY_PRINT(stream, pinfo, flags5);
-    MY_PRINT2(stream, pinfo, two_states4);
+    MY_PRINT2(stream, pinfo, two_states6);
+    MY_PRINT2(stream, pinfo, two_states7);
     MY_PRINT2(stream, pinfo, junk10);
     MY_PRINT(stream, pinfo, service_name2);
     MY_PRINT(stream, pinfo, aetitle1);
