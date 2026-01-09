@@ -55,7 +55,8 @@ void my_print2(FILE* stream, const char* name, const uint32_t* d, const size_t l
     fprintf(stream, "\n");
 }
 
-struct info
+
+struct info_common
 {
     char magic[0x8D - 0x00];
     char flags1[0x190 - 0x8D];
@@ -115,29 +116,57 @@ struct info
     uint32_t junk11[19];
     char dicom_ds[0x3AD0 - 0x36C0 - 8 - 8];
     uint32_t junk12[5 + 2 + 2];
-    char gender[0x3CC4 - 0x3AE4];
+    char gender[0x3B2C - 0x3AE4];
+};
+
+struct info_15148
+{
+    struct info_common common;
+};
+
+struct info_18748
+{
+    struct info_common common;
+    //char gender[0x3CC4 - 0x3AE4];
+    char str[0x3CC4 - 0x3B2C];
     char mode[0x42DC - 0x3CC4];
     char left_right[0x48F4 - 0x42DC];
     char position[0x493B - 0x48F4];
 };
 
 #define MY_PRINT(stream, struct_ptr, member) \
-    my_print((stream), #member, (struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
-#define MY_PRINT2(stream, struct_ptr, member) \
-my_print2((stream), #member, (struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+    my_print((stream), #member, (struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info_common,member))
 
-static void process_canon(FILE* stream, const char* data, size_t size)
+#define MY_PRINT2(stream, struct_ptr, member) \
+    my_print2((stream), #member, (struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info_common,member))
+
+#define MY_PRINT3(stream, struct_ptr, member) \
+my_print((stream), #member, (struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info_18748,member))
+
+static void process_canon(FILE* stream, const char* data, const size_t size)
 {
-    const size_t SIZE = 18748; // 4687 * 4
-    const size_t s = sizeof(struct info);
-    assert(s==SIZE);
-    struct info* pinfo = malloc(sizeof(struct info));
-    if (!pinfo)
+    const size_t SIZE1 = 15148;
+    const size_t SIZE2 = 18748; // 4687 * 4
+    const size_t s1 = sizeof(struct info_15148);
+    assert(s1==SIZE1);
+    const size_t s2 = sizeof(struct info_18748);
+    assert(s2==SIZE2);
+    void* pinfo0 = NULL;
+    if (size == SIZE1)
+    {
+        pinfo0 = malloc(sizeof(struct info_15148));
+    }
+    else if (size == SIZE2)
+    {
+        pinfo0 = malloc(sizeof(struct info_18748));
+    }
+    if (!pinfo0)
     {
         perror("Failed to allocate struct info");
         // Handle error as needed
     }
-    memcpy(pinfo, data, sizeof(struct info));
+    memcpy(pinfo0, data, size);
+    struct info_common* pinfo = pinfo0;
 
     MY_PRINT(stream, pinfo, magic);
     MY_PRINT(stream, pinfo, flags1);
@@ -203,9 +232,14 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     MY_PRINT(stream, pinfo, dicom_ds);
     MY_PRINT2(stream, pinfo, junk12);
     MY_PRINT(stream, pinfo, gender);
-    MY_PRINT(stream, pinfo, mode);
-    MY_PRINT(stream, pinfo, left_right);
-    MY_PRINT(stream, pinfo, position);
+    if (size == SIZE2)
+    {
+        struct info_18748* pinfo1 = pinfo0;
+        MY_PRINT3(stream, pinfo1, str);
+        MY_PRINT3(stream, pinfo1, mode);
+        MY_PRINT3(stream, pinfo1, left_right);
+        MY_PRINT3(stream, pinfo1, position);
+    }
     free(pinfo);
 }
 
