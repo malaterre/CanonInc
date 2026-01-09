@@ -56,7 +56,7 @@ struct info
     char magic[0x8D - 0x00];
     char flags1[0x190 - 0x8D];
     uint32_t junk11[1];
-    char str38[0x320 - 0x194];
+    char fixme2[0x320 - 0x194];
     char local_ip[0x40 /* 64 */];
     uint32_t junk1[1];
     char hostname1[0x41];
@@ -87,7 +87,7 @@ struct info
     char fixme1[0x2BEA - 0x2aaa - 0];
     char str18[0x2df0 - 0x2bea - 4];
     uint32_t junk4[1];
-    char str19[0x2ff4 - 0x2df0 - 4];
+    char study_desc[0x2ff4 - 0x2df0 - 4];
     uint32_t junk5[1];
     char versions[0x3034 - 0x2ff4];
     uint32_t junk6[9];
@@ -97,8 +97,8 @@ struct info
     char flags3[0X31E4 - 0X30E0];
     uint32_t j[10];
     char p[1];
-    char str26[0x3250 - 0x320D]; // digital trash ?
-    char str27[0x3294 - 0x3250];
+    char ip4_dt[0x3250 - 0x320D]; // digital trash ?
+    char dry2[0x3294 - 0x3250];
     char flags5[0x3398 - 0x3294];
     char str29[0x34A4 - 0x3398]; // fixme
     char hostname2[0x34E8 - 0x34A4];
@@ -107,15 +107,15 @@ struct info
     char dry[0x35B8 - 0x3570];
     uint32_t junk10[1];
     uint32_t junk7[12];
-    char str22[0x3630 - 0x35EC];
-    char str23[0x3674 - 0x3630];
+    char orientation1[0x3630 - 0x35EC];
+    char orientation2[0x3674 - 0x3630];
     uint32_t junk8[19];
     char dicom_ds[0x3AD0 - 0x36C0 - 8];
     uint32_t junk9[5 + 2];
     char gender[0x3CC4 - 0x3AE4];
     char mode[0x42DC - 0x3CC4];
     char left_right[0x48F4 - 0x42DC];
-    char str33[0x493B - 0x48F4];
+    char position[0x493B - 0x48F4];
 };
 
 #define MY_PRINT(stream, struct_ptr, member) \
@@ -136,7 +136,7 @@ static void process_canon(FILE* stream, const char* data, size_t size)
 
     MY_PRINT(stream, pinfo, magic);
     MY_PRINT(stream, pinfo, flags1);
-    MY_PRINT(stream, pinfo, str38);
+    MY_PRINT(stream, pinfo, fixme2);
     MY_PRINT(stream, pinfo, local_ip);
     my_print_u32(stream, pinfo->junk1, sizeof(pinfo->junk1));
     MY_PRINT(stream, pinfo, hostname1);
@@ -165,7 +165,7 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     // fixme1 ??
     //my_print(stream, "str18", pinfo->str18, sizeof(pinfo->str18));
     my_print_u32(stream, pinfo->junk4, sizeof(pinfo->junk4));
-    MY_PRINT(stream, pinfo, str19);
+    MY_PRINT(stream, pinfo, study_desc);
     MY_PRINT(stream, pinfo, versions);
     my_print_u32(stream, pinfo->junk6, sizeof(pinfo->junk6));
     int ret = is_buffer_all_zero(pinfo->zeros2, sizeof(pinfo->zeros2));
@@ -173,8 +173,8 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     MY_PRINT(stream, pinfo, ip4);
     MY_PRINT(stream, pinfo, hostname3);
     MY_PRINT(stream, pinfo, flags3);
-    MY_PRINT(stream, pinfo, str26);
-    MY_PRINT(stream, pinfo, str27);
+    MY_PRINT(stream, pinfo, ip4_dt);
+    MY_PRINT(stream, pinfo, dry2);
     MY_PRINT(stream, pinfo, flags5);
     //my_print(stream, "str29", pinfo->str29, sizeof(pinfo->str29));
     MY_PRINT(stream, pinfo, hostname2);
@@ -182,15 +182,15 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     MY_PRINT(stream, pinfo, app_name);
     MY_PRINT(stream, pinfo, dry);
     my_print_u32(stream, pinfo->junk7, sizeof(pinfo->junk7));
-    MY_PRINT(stream, pinfo, str22);
-    MY_PRINT(stream, pinfo, str23);
+    MY_PRINT(stream, pinfo, orientation1);
+    MY_PRINT(stream, pinfo, orientation2);
     my_print_u32(stream, pinfo->junk8, sizeof(pinfo->junk8));
     MY_PRINT(stream, pinfo, dicom_ds);
     my_print_u32(stream, pinfo->junk9, sizeof(pinfo->junk9));
     MY_PRINT(stream, pinfo, gender);
     MY_PRINT(stream, pinfo, mode);
     MY_PRINT(stream, pinfo, left_right);
-    MY_PRINT(stream, pinfo, str33);
+    MY_PRINT(stream, pinfo, position);
 }
 
 int main(int argc, char* argv[])
