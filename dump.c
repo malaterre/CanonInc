@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h> /* offsetof */
 
 int is_buffer_all_zero(const char* buffer, const size_t size)
 {
@@ -47,7 +48,10 @@ struct info
     char hostname1[0x41];
     char flags2[0x103];
     uint32_t junk2[1];
-    char str2[0x10 + 448];
+    char str2[0x4EC - 0x4ac];
+    uint32_t junk12[1];
+    char str3[0x634 - 0x4F0];
+    uint32_t junk13[18];
     uint32_t junk3[5];
     char caltype[0x30 + 209];
     char cdc[257];
@@ -117,7 +121,9 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     my_print(stream, "hostname1", pinfo->hostname1, sizeof(pinfo->hostname1));
     my_print(stream, "flags2", pinfo->flags2, sizeof(pinfo->flags2));
     my_print_u32(stream, pinfo->junk2, sizeof(pinfo->junk2));
+    //fprintf(stream, "str2 offset: %zu\n", offsetof(struct info,str2));
     my_print(stream, "str2", pinfo->str2, sizeof(pinfo->str2));
+    my_print(stream, "str3", pinfo->str3, sizeof(pinfo->str3));
     my_print_u32(stream, pinfo->junk3, sizeof(pinfo->junk3));
     my_print(stream, "cal-type", pinfo->caltype, sizeof(pinfo->caltype));
     my_print(stream, "cdc", pinfo->cdc, sizeof(pinfo->cdc));
