@@ -50,7 +50,12 @@ struct info
     uint32_t junk2[1];
     char str2[0x4EC - 0x4ac];
     uint32_t junk12[1];
+#if 0
     char str3[0x634 - 0x4F0];
+#else
+    char str3[0x531 - 0x4F0];
+    char str4[0x634 - 0x531];
+#endif
     uint32_t junk13[18];
     uint32_t junk3[5];
     char caltype[0x30 + 209];
@@ -124,6 +129,7 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     //fprintf(stream, "str2 offset: %zu\n", offsetof(struct info,str2));
     my_print(stream, "str2", pinfo->str2, sizeof(pinfo->str2));
     my_print(stream, "str3", pinfo->str3, sizeof(pinfo->str3));
+    my_print(stream, "str4", pinfo->str4, sizeof(pinfo->str4));
     my_print_u32(stream, pinfo->junk3, sizeof(pinfo->junk3));
     my_print(stream, "cal-type", pinfo->caltype, sizeof(pinfo->caltype));
     my_print(stream, "cdc", pinfo->cdc, sizeof(pinfo->cdc));
