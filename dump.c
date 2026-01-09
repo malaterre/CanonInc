@@ -39,11 +39,13 @@ void my_print_u32(FILE* stream, const uint32_t* d, size_t len)
 struct info
 {
     char magic[0x8D - 0x00];
-    char str31[0x320 - 0x8D];
-    char ip4[0x40 /* 64 */];
+    char flags1[0x190 - 0x8D];
+    uint32_t junk11[1];
+    char str38[0x320 - 0x194];
+    char local_ip[0x40 /* 64 */];
     uint32_t junk1[1];
     char hostname1[0x41];
-    char str1[0x103];
+    char flags2[0x103];
     uint32_t junk2[1];
     char str2[0x10 + 448];
     uint32_t junk3[5];
@@ -71,8 +73,8 @@ struct info
     char str20[0x3034 - 0x2ff4];
     uint32_t junk6[9];
     char zeros2[1];
-    char str32[0x309C - 0x3059];
-    char str33[0X30E0 - 0x309C];
+    char ip4[0x309C - 0x3059];
+    char hostname3[0X30E0 - 0x309C];
     char str34[0X31E4 - 0X30E0];
     uint32_t j[10];
     char p[1];
@@ -82,7 +84,7 @@ struct info
     char str29[0x34A4 - 0x339C]; // fixme
     char hostname2[0x34E8 - 0x34A4];
     char str37[0x352C - 0x34E8];
-    char str35[0x3570 - 0x352C];
+    char app_name[0x3570 - 0x352C];
     char str30[0x35B8 - 0x3570];
     uint32_t junk10[1];
     uint32_t junk7[12];
@@ -108,15 +110,16 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     memcpy(pinfo, data, sizeof(struct info));
 
     my_print(stream, "magic", pinfo->magic, sizeof(pinfo->magic));
-    my_print(stream, "str31", pinfo->str31, sizeof(pinfo->str31));
-    my_print(stream, "ip4", pinfo->ip4, sizeof(pinfo->ip4));
+    my_print(stream, "flags1", pinfo->flags1, sizeof(pinfo->flags1));
+    my_print(stream, "str38", pinfo->str38, sizeof(pinfo->str38));
+    my_print(stream, "local_ip", pinfo->local_ip, sizeof(pinfo->local_ip));
     my_print_u32(stream, pinfo->junk1, sizeof(pinfo->junk1));
     my_print(stream, "hostname1", pinfo->hostname1, sizeof(pinfo->hostname1));
-    my_print(stream, "flags", pinfo->str1, sizeof(pinfo->str1));
+    my_print(stream, "flags2", pinfo->flags2, sizeof(pinfo->flags2));
     my_print_u32(stream, pinfo->junk2, sizeof(pinfo->junk2));
     my_print(stream, "str2", pinfo->str2, sizeof(pinfo->str2));
     my_print_u32(stream, pinfo->junk3, sizeof(pinfo->junk3));
-    my_print(stream, "caltype", pinfo->caltype, sizeof(pinfo->caltype));
+    my_print(stream, "cal-type", pinfo->caltype, sizeof(pinfo->caltype));
     my_print(stream, "cdc", pinfo->cdc, sizeof(pinfo->cdc));
     my_print(stream, "cc", pinfo->cc, sizeof(pinfo->cc));
     my_print(stream, "am", pinfo->am, sizeof(pinfo->am));
@@ -139,7 +142,17 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     my_print_u32(stream, pinfo->junk6, sizeof(pinfo->junk6));
     int ret = is_buffer_all_zero(pinfo->zeros2, sizeof(pinfo->zeros2));
     assert(ret==1);
+    my_print(stream, "ip4", pinfo->ip4, sizeof(pinfo->ip4));
+    my_print(stream, "hostname3", pinfo->hostname3, sizeof(pinfo->hostname3));
+    my_print(stream, "str34", pinfo->str34, sizeof(pinfo->str34));
+    my_print(stream, "str26", pinfo->str26, sizeof(pinfo->str26));
+    my_print(stream, "str27", pinfo->str27, sizeof(pinfo->str27));
+    my_print(stream, "str28", pinfo->str28, sizeof(pinfo->str28));
+    //my_print(stream, "str29", pinfo->str29, sizeof(pinfo->str29));
     my_print(stream, "hostname2", pinfo->hostname2, sizeof(pinfo->hostname2));
+    my_print(stream, "str37", pinfo->str37, sizeof(pinfo->str37));
+    my_print(stream, "app_name", pinfo->app_name, sizeof(pinfo->app_name));
+    my_print(stream, "str30", pinfo->str30, sizeof(pinfo->str30));
     my_print_u32(stream, pinfo->junk7, sizeof(pinfo->junk7));
     my_print(stream, "str22", pinfo->str22, sizeof(pinfo->str22));
     my_print(stream, "str23", pinfo->str23, sizeof(pinfo->str23));
