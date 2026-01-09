@@ -34,10 +34,12 @@ void my_print(FILE* stream, const char* name, const char* str, const size_t len,
     const size_t l2 = strlen(buffer);
     const int ret2 = is_buffer_all_zero(buffer + l2, len - l2);
     const size_t alignement = offset % 4u;
-    if (ret == 1 || ret2 == 1)
+    if (ret == 1)
         fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignement, name, len, str);
+    else if (ret2 == 1)
+        fprintf(stream, "DT1 %04zx %zu %s %zu: [%s]\n", offset, alignement, name, len, buffer);
     else
-        fprintf(stream, "DT %04zx %zu %s %zu: [%s]\n", offset, alignement, name, len, str);
+        fprintf(stream, "DT2 %04zx %zu %s %zu: [%s]\n", offset, alignement, name, len, str);
 }
 
 void my_print2(FILE* stream, const char* name, const uint32_t* d, const size_t len, const size_t offset)
@@ -105,17 +107,19 @@ struct info_common
     char ip4_dt[0x3250 - 0x320D]; // digital trash ?
     char dry2[0x3294 - 0x3250];
     char flags5[0x3398 - 0x3294];
-    char str29[0x34A4 - 0x3398]; // fixme
+    //char str29[0x34A4 - 0x3398]; // fixme
+    uint32_t junk10[67 - 19];
+    char service_name[0x34A4 - 0x3458];
     char hostname2[0x34E8 - 0x34A4];
     char aetitle[0x352C - 0x34E8];
     char app_name[0x3570 - 0x352C];
     char dry[0x35B8 - 0x3570];
-    uint32_t junk10[12 + 1];
+    uint32_t junk11[13];
     char orientation1[0x3630 - 0x35EC];
     char orientation2[0x3674 - 0x3630];
-    uint32_t junk11[19];
+    uint32_t junk12[19];
     char dicom_ds[0x3AD0 - 0x36C0 - 8 - 8];
-    uint32_t junk12[5 + 2 + 2];
+    uint32_t junk13[9];
     char gender[0x3B2C - 0x3AE4];
 };
 
@@ -127,8 +131,7 @@ struct info_15148
 struct info_18748
 {
     struct info_common common;
-    //char gender[0x3CC4 - 0x3AE4];
-    char str[0x3CC4 - 0x3B2C];
+    char padding[0x3CC4 - 0x3B2C];
     char mode[0x42DC - 0x3CC4];
     char left_right[0x48F4 - 0x42DC];
     char position[0x493B - 0x48F4];
@@ -163,7 +166,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     if (!pinfo0)
     {
         perror("Failed to allocate struct info");
-        // Handle error as needed
+        return;
     }
     memcpy(pinfo0, data, size);
     struct info_common* pinfo = pinfo0;
@@ -201,8 +204,6 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     MY_PRINT(stream, pinfo, pid);
     MY_PRINT(stream, pinfo, format0);
     MY_PRINT(stream, pinfo, fixme1);
-    //ret = is_buffer_all_zero(pinfo->fixme1, sizeof(pinfo->fixme1));
-    //assert(ret==1);
     MY_PRINT(stream, pinfo, study_id);
     MY_PRINT2(stream, pinfo, small_number);
     MY_PRINT(stream, pinfo, study_desc);
@@ -220,22 +221,23 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     MY_PRINT(stream, pinfo, ip4_dt);
     MY_PRINT(stream, pinfo, dry2);
     MY_PRINT(stream, pinfo, flags5);
-    MY_PRINT(stream, pinfo, str29);
+    MY_PRINT2(stream, pinfo, junk10);
+    MY_PRINT(stream, pinfo, service_name);
     MY_PRINT(stream, pinfo, hostname2);
     MY_PRINT(stream, pinfo, aetitle);
     MY_PRINT(stream, pinfo, app_name);
     MY_PRINT(stream, pinfo, dry);
-    MY_PRINT2(stream, pinfo, junk10);
+    MY_PRINT2(stream, pinfo, junk11);
     MY_PRINT(stream, pinfo, orientation1);
     MY_PRINT(stream, pinfo, orientation2);
-    MY_PRINT2(stream, pinfo, junk11);
-    MY_PRINT(stream, pinfo, dicom_ds);
     MY_PRINT2(stream, pinfo, junk12);
+    MY_PRINT(stream, pinfo, dicom_ds);
+    MY_PRINT2(stream, pinfo, junk13);
     MY_PRINT(stream, pinfo, gender);
     if (size == SIZE2)
     {
         struct info_18748* pinfo1 = pinfo0;
-        MY_PRINT3(stream, pinfo1, str);
+        MY_PRINT3(stream, pinfo1, padding);
         MY_PRINT3(stream, pinfo1, mode);
         MY_PRINT3(stream, pinfo1, left_right);
         MY_PRINT3(stream, pinfo1, position);
