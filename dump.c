@@ -25,6 +25,14 @@ void my_print(FILE* stream, const char* name, const char* str, const size_t len)
     fprintf(stream, "%s: [%s]\n", name, str);
 }
 
+void my_print2(FILE* stream, const char* name, const char* str, const size_t len)
+{
+    const size_t l = strlen(str);
+    const int ret = is_buffer_all_zero(str + l, len - l);
+    //assert(ret == 1);
+    fprintf(stream, "%s: [%s]\n", name, str);
+}
+
 void my_print_u32(FILE* stream, const uint32_t* d, size_t len)
 {
     const size_t n = len / sizeof(uint32_t);
@@ -48,14 +56,10 @@ struct info
     char hostname1[0x41];
     char flags2[0x103];
     uint32_t junk2[1];
-    char str2[0x4EC - 0x4ac];
+    char ip4_2[0x4EC - 0x4ac];
     uint32_t junk12[1];
-#if 0
-    char str3[0x634 - 0x4F0];
-#else
-    char str3[0x531 - 0x4F0];
-    char str4[0x634 - 0x531];
-#endif
+    char aetitle2[0x531 - 0x4F0];
+    char flags4[0x634 - 0x531];
     uint32_t junk13[18];
     uint32_t junk3[5];
     char caltype[0x30 + 209];
@@ -84,25 +88,28 @@ struct info
     char zeros2[1];
     char ip4[0x309C - 0x3059];
     char hostname3[0X30E0 - 0x309C];
-    char str34[0X31E4 - 0X30E0];
+    char flags3[0X31E4 - 0X30E0];
     uint32_t j[10];
     char p[1];
     char str26[0x3250 - 0x320D];
     char str27[0x3294 - 0x3250];
-    char str28[0x339C - 0x3294];
-    char str29[0x34A4 - 0x339C]; // fixme
+    char str28[0x3398 - 0x3294];
+    char str29[0x34A4 - 0x3398]; // fixme
     char hostname2[0x34E8 - 0x34A4];
-    char str37[0x352C - 0x34E8];
+    char aetitle[0x352C - 0x34E8];
     char app_name[0x3570 - 0x352C];
-    char str30[0x35B8 - 0x3570];
+    char dry[0x35B8 - 0x3570];
     uint32_t junk10[1];
     uint32_t junk7[12];
     char str22[0x3630 - 0x35EC];
     char str23[0x3674 - 0x3630];
     uint32_t junk8[19];
-    char str24[0x3AD0 - 0x36C0 - 8];
+    char dicom_ds[0x3AD0 - 0x36C0 - 8];
     uint32_t junk9[5 + 2];
-    char gender[0x493B - 0x3AE4];
+    char gender[0x3CC4 - 0x3AE4];
+    char mode[0x42DC - 0x3CC4];
+    char left_right[0x48F4 - 0x42DC];
+    char str33[0x493B - 0x48F4];
 };
 
 static void process_canon(FILE* stream, const char* data, size_t size)
@@ -127,13 +134,13 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     my_print(stream, "flags2", pinfo->flags2, sizeof(pinfo->flags2));
     my_print_u32(stream, pinfo->junk2, sizeof(pinfo->junk2));
     //fprintf(stream, "str2 offset: %zu\n", offsetof(struct info,str2));
-    my_print(stream, "str2", pinfo->str2, sizeof(pinfo->str2));
-    my_print(stream, "str3", pinfo->str3, sizeof(pinfo->str3));
-    my_print(stream, "str4", pinfo->str4, sizeof(pinfo->str4));
+    my_print2(stream, "ip4_2", pinfo->ip4_2, sizeof(pinfo->ip4_2));
+    my_print(stream, "ae title 2", pinfo->aetitle2, sizeof(pinfo->aetitle2));
+    my_print(stream, "flags4", pinfo->flags4, sizeof(pinfo->flags4));
     my_print_u32(stream, pinfo->junk3, sizeof(pinfo->junk3));
     my_print(stream, "cal-type", pinfo->caltype, sizeof(pinfo->caltype));
     my_print(stream, "cdc", pinfo->cdc, sizeof(pinfo->cdc));
-    my_print(stream, "cc", pinfo->cc, sizeof(pinfo->cc));
+    my_print2(stream, "cc", pinfo->cc, sizeof(pinfo->cc)); // fixme
     my_print(stream, "am", pinfo->am, sizeof(pinfo->am));
     my_print(stream, "pos1", pinfo->pos1, sizeof(pinfo->pos1));
     my_print(stream, "pos2", pinfo->pos2, sizeof(pinfo->pos2));
@@ -147,7 +154,7 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     my_print(stream, "laterality2", pinfo->ltrlty2, sizeof(pinfo->ltrlty2));
     my_print(stream, "pid", pinfo->pid, sizeof(pinfo->pid));
     // fixme1 ??
-    my_print(stream, "str18", pinfo->str18, sizeof(pinfo->str18));
+    //my_print(stream, "str18", pinfo->str18, sizeof(pinfo->str18));
     my_print_u32(stream, pinfo->junk4, sizeof(pinfo->junk4));
     my_print(stream, "str19", pinfo->str19, sizeof(pinfo->str19));
     my_print(stream, "str20", pinfo->str20, sizeof(pinfo->str20));
@@ -156,22 +163,25 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     assert(ret==1);
     my_print(stream, "ip4", pinfo->ip4, sizeof(pinfo->ip4));
     my_print(stream, "hostname3", pinfo->hostname3, sizeof(pinfo->hostname3));
-    my_print(stream, "str34", pinfo->str34, sizeof(pinfo->str34));
+    my_print(stream, "flags3", pinfo->flags3, sizeof(pinfo->flags3));
     my_print(stream, "str26", pinfo->str26, sizeof(pinfo->str26));
     my_print(stream, "str27", pinfo->str27, sizeof(pinfo->str27));
     my_print(stream, "str28", pinfo->str28, sizeof(pinfo->str28));
     //my_print(stream, "str29", pinfo->str29, sizeof(pinfo->str29));
     my_print(stream, "hostname2", pinfo->hostname2, sizeof(pinfo->hostname2));
-    my_print(stream, "str37", pinfo->str37, sizeof(pinfo->str37));
+    my_print(stream, "ae title", pinfo->aetitle, sizeof(pinfo->aetitle));
     my_print(stream, "app_name", pinfo->app_name, sizeof(pinfo->app_name));
-    my_print(stream, "str30", pinfo->str30, sizeof(pinfo->str30));
+    my_print(stream, "dry", pinfo->dry, sizeof(pinfo->dry));
     my_print_u32(stream, pinfo->junk7, sizeof(pinfo->junk7));
     my_print(stream, "str22", pinfo->str22, sizeof(pinfo->str22));
     my_print(stream, "str23", pinfo->str23, sizeof(pinfo->str23));
     my_print_u32(stream, pinfo->junk8, sizeof(pinfo->junk8));
-    my_print(stream, "str24", pinfo->str24, sizeof(pinfo->str24));
+    my_print(stream, "dicom_ds", pinfo->dicom_ds, sizeof(pinfo->dicom_ds));
     my_print_u32(stream, pinfo->junk9, sizeof(pinfo->junk9));
     my_print(stream, "gender", pinfo->gender, sizeof(pinfo->gender));
+    my_print(stream, "mode", pinfo->mode, sizeof(pinfo->mode));
+    my_print(stream, "left-right", pinfo->left_right, sizeof(pinfo->left_right));
+    my_print(stream, "str33", pinfo->str33, sizeof(pinfo->str33));
 }
 
 int main(int argc, char* argv[])
