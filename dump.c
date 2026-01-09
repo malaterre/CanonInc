@@ -17,20 +17,26 @@ int is_buffer_all_zero(const char* buffer, const size_t size)
     return 1;
 }
 
-void my_print(FILE* stream, const char* name, const char* str, const size_t len)
+void my_print(FILE* stream, const char* name, const char* str, const size_t len, const size_t offset)
 {
     const size_t l = strlen(str);
     const int ret = is_buffer_all_zero(str + l, len - l);
-    assert(ret == 1);
-    fprintf(stream, "%s: [%s]\n", name, str);
-}
-
-void my_print2(FILE* stream, const char* name, const char* str, const size_t len)
-{
-    const size_t l = strlen(str);
-    const int ret = is_buffer_all_zero(str + l, len - l);
-    //assert(ret == 1);
-    fprintf(stream, "%s: [%s]\n", name, str);
+    // digital trash
+    assert(len < 512u*4);
+    char buffer[512 * 4];
+    memcpy(buffer, str, len);
+    buffer[len] = '\0';
+    if (*buffer == 0)
+    {
+        assert(l==0);
+        buffer[0] = ' ';
+    }
+    const size_t l2 = strlen(buffer);
+    const int ret2 = is_buffer_all_zero(buffer + l2, len - l2);
+    if (ret == 1 || ret2 == 1)
+        fprintf(stream, "%04zx %s: [%s]\n", offset, name, str);
+    else
+        fprintf(stream, "DT %04zx %s: [%s]\n", offset, name, str);
 }
 
 void my_print_u32(FILE* stream, const uint32_t* d, size_t len)
@@ -113,7 +119,7 @@ struct info
 };
 
 #define MY_PRINT(stream, struct_ptr, member) \
-    my_print((stream), #member, (struct_ptr)->member, sizeof((struct_ptr)->member))
+    my_print((stream), #member, (struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
 static void process_canon(FILE* stream, const char* data, size_t size)
 {
@@ -137,13 +143,13 @@ static void process_canon(FILE* stream, const char* data, size_t size)
     MY_PRINT(stream, pinfo, flags2);
     my_print_u32(stream, pinfo->junk2, sizeof(pinfo->junk2));
     //fprintf(stream, "str2 offset: %zu\n", offsetof(struct info,str2));
-    my_print2(stream, "ip4_2", pinfo->ip4_2, sizeof(pinfo->ip4_2));
+    MY_PRINT(stream, pinfo, ip4_2);
     MY_PRINT(stream, pinfo, aetitle2);
     MY_PRINT(stream, pinfo, flags4);
     my_print_u32(stream, pinfo->junk3, sizeof(pinfo->junk3));
     MY_PRINT(stream, pinfo, caltype);
     MY_PRINT(stream, pinfo, cdc);
-    my_print2(stream, "cc", pinfo->cc, sizeof(pinfo->cc)); // fixme
+    MY_PRINT(stream, pinfo, cc);
     MY_PRINT(stream, pinfo, am);
     MY_PRINT(stream, pinfo, pos1);
     MY_PRINT(stream, pinfo, pos2);
