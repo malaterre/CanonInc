@@ -188,7 +188,7 @@ struct info_18748
 #define MY_PRINT3(stream, struct_ptr, member) \
   my_print((stream), #member, (struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info_18748,member))
 
-#define MY_PRINT4(stream, struct_ptr, member) \
+#define PRINT_ENDPOINT(stream, struct_ptr, member) \
   my_print3((stream), #member, (struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info_common,member))
 
 static void process_canon(FILE* stream, const char* data, const size_t size)
@@ -286,7 +286,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     MY_PRINT2(stream, pinfo, junk12);
     MY_PRINT(stream, pinfo, dicom_ds);
     //MY_PRINT2(stream, pinfo, junk13);
-    MY_PRINT4(stream, pinfo, junk13);
+    PRINT_ENDPOINT(stream, pinfo, junk13);
     MY_PRINT(stream, pinfo, gender);
     if (size == SIZE2)
     {

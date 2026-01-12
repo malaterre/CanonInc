@@ -136,23 +136,24 @@ enum STATUS
     INITIALIZED = 2
 };
 
-struct magic
+struct config
 {
-    uint32_t v[2];
-    char magic[0x8C - 8];
-    char padding;
-    char flags[0x190 - 0x8D];
+    char zeros[0x84 /* 132 */];
+    char padding1;
+    char options[0x102];
+    char padding2;
     uint32_t status; // O or 2
 };
 
-void print_magic(FILE* stream, const char* name, struct magic* m, const size_t len, const size_t offset)
+void print_config(FILE* stream, const char* name, struct config* m, const size_t len, const size_t offset)
 {
     const size_t alignment = offset % 4u;
     char buffer[512 * 4];
     assert(len < sizeof(buffer));
-    assert(m->padding==0);
-    sprintf(buffer, "%.*s:%.*s:%u", (int)sizeof(m->magic), m->magic,
-            (int)sizeof(m->flags), m->flags,
+    assert(is_buffer_all_zero(m->zeros, sizeof(m->zeros)) == 1);
+    assert(m->padding1==0);
+    sprintf(buffer, "%.*s:%.*s:%u", (int)sizeof(m->zeros), m->zeros,
+            (int)sizeof(m->options), m->options,
             m->status);
     assert(m->status == EMPTY || m->status == INITIALIZED);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
@@ -174,7 +175,13 @@ enum PORTS
     PORT_INDEX = 1
 };
 
-void my_print4(FILE* stream, const char* name, struct endpoint* e, const size_t len, const size_t offset)
+enum MAGIC
+{
+    MAGIC_VALUE0 = 0x41414141, // ASCII 'AAAA'
+    MAGIC_VALUE1 = 0x1
+};
+
+void print_endpoint(FILE* stream, const char* name, struct endpoint* e, const size_t len, const size_t offset)
 {
     const size_t alignment = offset % 4u;
     assert(alignment==0);
@@ -234,13 +241,8 @@ typedef char string257[256 + 1];
 
 struct info
 {
-#if 0
-    char magic[0x8D - 0x00];
-    char flags1[0x190 - 0x8D];
-    uint32_t two_states1[1]; // O or 2
-#else
-    struct magic magic;
-#endif
+    uint32_t magic[2];
+    struct config config;
     char zeros1[0x320 - 0x194];
     /* start endpoint */
     struct endpoint endpoint1;
@@ -248,11 +250,7 @@ struct info
     /* start endpoint */
     struct endpoint endpoint2;
     /* end endpoint */
-#if 0
-    uint32_t junk5[23 - 1];
-#else
     struct junk5 junk5;
-#endif
     char caltype[0x30 + 209];
     char cdc[257];
     char cc[0x0a94 - 0x0892];
@@ -332,13 +330,14 @@ struct info
 #define MY_PRINT3(stream, struct_ptr, member) \
   my_print3((stream), #member, (struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
-#define MY_PRINT4(stream, struct_ptr, member) \
-  my_print4((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
-#define PRINT_MAGIC(stream, struct_ptr, member) \
-print_magic((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
-#define MY_PRINT6(stream, struct_ptr, member) \
-my_print6((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+#define PRINT_ENDPOINT(stream, struct_ptr, member) \
+  print_endpoint((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
+#define PRINT_CONFIG(stream, struct_ptr, member) \
+  print_config((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+
+#define MY_PRINT6(stream, struct_ptr, member) \
+  my_print6((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
 static void process_canon(FILE* stream, const char* data, const size_t size)
 {
@@ -358,12 +357,14 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     }
     memcpy(pinfo, data, size);
 
-    PRINT_MAGIC(stream, pinfo, magic);
+    assert(pinfo->magic[0] == MAGIC_VALUE0);
+    assert(pinfo->magic[1] == MAGIC_VALUE1);
+    PRINT_CONFIG(stream, pinfo, config);
     int ret = is_buffer_all_zero(pinfo->zeros1, sizeof(pinfo->zeros1));
     assert(ret==1);
     MY_PRINT(stream, pinfo, zeros1);
-    MY_PRINT4(stream, pinfo, endpoint1);
-    MY_PRINT4(stream, pinfo, endpoint2);
+    PRINT_ENDPOINT(stream, pinfo, endpoint1);
+    PRINT_ENDPOINT(stream, pinfo, endpoint2);
     MY_PRINT6(stream, pinfo, junk5);
     MY_PRINT(stream, pinfo, caltype);
     MY_PRINT(stream, pinfo, cdc);
