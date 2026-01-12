@@ -14,6 +14,7 @@
 
 int is_buffer_all_zero(const char* buffer, const size_t size)
 {
+    assert(buffer);
     for (size_t i = 0; i < size; ++i)
     {
         if (buffer[i] != 0x0)
@@ -23,6 +24,54 @@ int is_buffer_all_zero(const char* buffer, const size_t size)
     }
     return 1;
 }
+
+int is_phi(const char* str, const size_t len)
+{
+    assert(str);
+    assert(len > 2);
+    if (str[0] == 0x0 && str[1] != 0x0)
+    {
+        char buffer[512 * 4];
+        assert(len < sizeof(buffer));
+        memcpy(buffer, str, len);
+        buffer[len] = '\0';
+        buffer[0] = ' ';
+        const size_t l2 = strlen(buffer);
+        assert(l2>2);
+        const int ret2 = is_buffer_all_zero(buffer + l2, len - l2);
+        assert(ret2);
+        return 1;
+    }
+    return 0;
+}
+
+int is_value(const char* str, const size_t len)
+{
+    assert(str);
+    assert(len > 2);
+    int r = is_buffer_all_zero(str, len);
+    if (r == 1) return 0;
+    r = is_phi(str, len);
+    if (r == 1) return 0;
+    char buffer[512 * 4];
+    assert(len < sizeof(buffer));
+    memcpy(buffer, str, len);
+    buffer[len] = '\0';
+    const size_t l = strlen(buffer);
+    const int ret = is_buffer_all_zero(str + l, len - l);
+    assert(ret == 1);
+    return 1;
+}
+
+
+#define STR_IS_ZERO(str) \
+is_buffer_all_zero((str), sizeof(str))
+
+#define STR_IS_VALUE(str) \
+is_value((str), sizeof(str))
+
+#define STR_IS_PHI(str) \
+is_phi((str), sizeof(str))
 
 void my_print(FILE* stream, const char* name, const char* str, const size_t len, const size_t offset)
 {
@@ -112,9 +161,10 @@ struct endpoint
 {
     char ip[0x40 /* 64 */];
     uint16_t port_number[2];
-    char hostname1[0x40 + 0];
-    char padding;
-    char flags2[0x103];
+    char hostname[0x40 + 0];
+    char padding1;
+    char flags[0x102];
+    char padding2;
     uint32_t status; // 0 or 2
 };
 
@@ -125,22 +175,56 @@ void my_print4(FILE* stream, const char* name, struct endpoint* e, const size_t 
     char buffer[512 * 4];
     assert(len < sizeof(buffer));
     assert(e->port_number[0] == 0);
-    assert(e->padding==0);
+    assert(e->padding1==0);
+    assert(e->padding2==0);
     sprintf(buffer, "%.*s:%d:%.*s:%.*s:%u", (int)sizeof(e->ip), e->ip, e->port_number[1],
-            (int)sizeof(e->hostname1), e->hostname1,
-            (int)sizeof(e->flags2), e->flags2,
+            (int)sizeof(e->hostname), e->hostname,
+            (int)sizeof(e->flags), e->flags,
             e->status);
     assert(e->status == EMPTY || e->status == INITIALIZED);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
     if (e->status == EMPTY)
     {
-        assert(e->ip[0] == 0);
+        assert(STR_IS_ZERO(e->ip) == 1);
+        assert(e->port_number[1] == 0);
+        assert(STR_IS_ZERO(e->hostname) == 1);
+        assert(STR_IS_ZERO(e->flags) == 1);
     }
     else
     {
+        assert(STR_IS_VALUE(e->ip) == 1 || STR_IS_PHI(e->ip) == 1);
+        assert(e->port_number[1] != 0);
+        assert(STR_IS_VALUE(e->hostname) == 1 || STR_IS_PHI(e->hostname) == 1);
+        assert(STR_IS_VALUE(e->flags) == 1|| STR_IS_PHI(e->flags) == 1
+            || STR_IS_ZERO(e->flags) == 1);
     }
 }
 
+struct junk5
+{
+    uint32_t zeros[17];
+    uint32_t values[5]; // patient_id/study_id followed by series_number x 2 ?
+};
+
+void my_print6(FILE* stream, const char* name, struct junk5* j, const size_t len, const size_t offset)
+{
+    const size_t alignment = offset % 4u;
+    assert(alignment==0);
+    char buffer[512 * 4];
+    assert(len < sizeof(buffer));
+    for (int i = 0; i < 17; ++i)
+        assert(j->zeros[i] == 0);
+    assert(j->values[2] == 1);
+    assert(j->values[3] == 1);
+    sprintf(buffer, "%u,%u,%u", j->values[0],
+            j->values[1],
+            j->values[4]
+    );
+    assert(j->values[1] == j->values[4]);
+    fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
+}
+
+typedef char string257[256 + 1];
 
 struct info
 {
@@ -158,7 +242,11 @@ struct info
     /* start endpoint */
     struct endpoint endpoint2;
     /* end endpoint */
+#if 0
     uint32_t junk5[23 - 1];
+#else
+    struct junk5 junk5;
+#endif
     char caltype[0x30 + 209];
     char cdc[257];
     char cc[0x0a94 - 0x0892];
@@ -210,7 +298,8 @@ struct info
     char aetitle3[0x352C - 0x34E8];
     char app_name[0x3570 - 0x352C];
     char service_name3[0x35B8 - 0x3570];
-    uint32_t junk11[13];
+    uint32_t service_name3_status[1];
+    uint32_t junk11[12];
     char orientation1[0x3630 - 0x35EC];
     char orientation2[0x3674 - 0x3630];
     uint32_t junk12[19];
@@ -241,6 +330,9 @@ struct info
   my_print4((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define MY_PRINT5(stream, struct_ptr, member) \
 my_print5((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+#define MY_PRINT6(stream, struct_ptr, member) \
+my_print6((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+
 
 static void process_canon(FILE* stream, const char* data, const size_t size)
 {
@@ -266,7 +358,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     MY_PRINT(stream, pinfo, zeros1);
     MY_PRINT4(stream, pinfo, endpoint1);
     MY_PRINT4(stream, pinfo, endpoint2);
-    MY_PRINT2(stream, pinfo, junk5);
+    MY_PRINT6(stream, pinfo, junk5);
     MY_PRINT(stream, pinfo, caltype);
     MY_PRINT(stream, pinfo, cdc);
     MY_PRINT(stream, pinfo, cc);
@@ -314,6 +406,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     MY_PRINT(stream, pinfo, aetitle3);
     MY_PRINT(stream, pinfo, app_name);
     MY_PRINT(stream, pinfo, service_name3);
+    MY_PRINT2(stream, pinfo, service_name3_status);
     MY_PRINT2(stream, pinfo, junk11);
     MY_PRINT(stream, pinfo, orientation1);
     MY_PRINT(stream, pinfo, orientation2);

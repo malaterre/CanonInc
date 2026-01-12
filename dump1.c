@@ -150,7 +150,8 @@ struct info_common
     char aetitle3[0x352C - 0x34E8];
     char app_name[0x3570 - 0x352C];
     char service_name3[0x35B8 - 0x3570];
-    uint32_t junk11[13];
+    uint32_t service_name3_status[1];
+    uint32_t junk11[12];
     char orientation1[0x3630 - 0x35EC];
     char orientation2[0x3674 - 0x3630];
     uint32_t junk12[19];
@@ -276,6 +277,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     MY_PRINT(stream, pinfo, aetitle3);
     MY_PRINT(stream, pinfo, app_name);
     MY_PRINT(stream, pinfo, service_name3);
+    MY_PRINT2(stream, pinfo, service_name3_status);
     MY_PRINT2(stream, pinfo, junk11);
     MY_PRINT(stream, pinfo, orientation1);
     MY_PRINT(stream, pinfo, orientation2);
