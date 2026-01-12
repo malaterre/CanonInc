@@ -26,13 +26,14 @@ int is_buffer_all_zero(const char* buffer, const size_t size)
 
 void my_print(FILE* stream, const char* name, const char* str, const size_t len, const size_t offset)
 {
-    const size_t l = strlen(str);
-    const int ret = is_buffer_all_zero(str + l, len - l);
     // digital trash
     char buffer[512 * 4];
     assert(len < sizeof(buffer));
     memcpy(buffer, str, len);
     buffer[len] = '\0';
+    // end
+    const size_t l = strlen(buffer);
+    const int ret = is_buffer_all_zero(str + l, len - l);
     if (*buffer == 0)
     {
         assert(l==0);
@@ -182,14 +183,15 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     const size_t SIZE2 = 18748; // 4687 * 4
     const size_t s2 = sizeof(struct info);
     assert(s2==SIZE2);
-    void* pinfo0 = malloc(sizeof(struct info));
-    if (!pinfo0)
+    assert(size == SIZE1 || size == SIZE2);
+    struct info* pinfo;
+    pinfo = malloc(sizeof(struct info));
+    if (!pinfo)
     {
         perror("Failed to allocate struct info");
         return;
     }
-    memcpy(pinfo0, data, size);
-    struct info* pinfo = pinfo0;
+    memcpy(pinfo, data, size);
 
     MY_PRINT(stream, pinfo, magic);
     MY_PRINT(stream, pinfo, flags1);
@@ -290,7 +292,7 @@ int main(int argc, char* argv[])
     rewind(file);
 
     // Allocate buffer
-    char* buffer = malloc(filesize + 1);
+    char* buffer = malloc(filesize + 0);
     if (!buffer)
     {
         perror("Failed to allocate buffer");
@@ -299,8 +301,7 @@ int main(int argc, char* argv[])
     }
 
     // Read file into buffer
-    size_t read_size = fread(buffer, 1, filesize, file);
-    buffer[read_size] = '\0'; // Null-terminate the buffer
+    const size_t read_size = fread(buffer, 1, filesize, file);
 
     // Use buffer as needed...
     process_canon(stdout, buffer, filesize);
