@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 project(canon)
-add_executable(dump dump.c)
+add_executable(dump1 dump1.c)
 if(MSVC)
-target_compile_definitions(dump PRIVATE _CRT_SECURE_NO_WARNINGS)
+target_compile_definitions(dump1 PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
