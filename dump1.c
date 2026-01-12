@@ -82,7 +82,8 @@ void my_print3(FILE* stream, const char* name, const float* d, const size_t len,
 
 struct info_common
 {
-    char magic[0x8D - 0x00];
+    uint32_t magic[2];
+    char config[0x8D - 0x00 - 8];
     char flags1[0x190 - 0x8D];
     uint32_t two_states1[1]; // O or 2
     char zeros1[0x320 - 0x194];
@@ -215,7 +216,8 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     memcpy(pinfo0, data, size);
     struct info_common* pinfo = pinfo0;
 
-    MY_PRINT(stream, pinfo, magic);
+    MY_PRINT2(stream, pinfo, magic);
+    MY_PRINT(stream, pinfo, config);
     MY_PRINT(stream, pinfo, flags1);
     MY_PRINT2(stream, pinfo, two_states1);
     int ret = is_buffer_all_zero(pinfo->zeros1, sizeof(pinfo->zeros1));

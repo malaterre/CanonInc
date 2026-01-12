@@ -138,13 +138,14 @@ enum STATUS
 
 struct magic
 {
-    char magic[0x8C];
+    uint32_t v[2];
+    char magic[0x8C - 8];
     char padding;
     char flags[0x190 - 0x8D];
     uint32_t status; // O or 2
 };
 
-void my_print5(FILE* stream, const char* name, struct magic* m, const size_t len, const size_t offset)
+void print_magic(FILE* stream, const char* name, struct magic* m, const size_t len, const size_t offset)
 {
     const size_t alignment = offset % 4u;
     char buffer[512 * 4];
@@ -160,12 +161,17 @@ void my_print5(FILE* stream, const char* name, struct magic* m, const size_t len
 struct endpoint
 {
     char ip[0x40 /* 64 */];
-    uint16_t port_number[2];
-    char hostname[0x40 + 0];
+    uint16_t port_numbers[2];
+    char hostname[0x40];
     char padding1;
-    char flags[0x102];
+    char options[0x102];
     char padding2;
     uint32_t status; // 0 or 2
+};
+
+enum PORTS
+{
+    PORT_INDEX = 1
 };
 
 void my_print4(FILE* stream, const char* name, struct endpoint* e, const size_t len, const size_t offset)
@@ -174,29 +180,29 @@ void my_print4(FILE* stream, const char* name, struct endpoint* e, const size_t 
     assert(alignment==0);
     char buffer[512 * 4];
     assert(len < sizeof(buffer));
-    assert(e->port_number[0] == 0);
+    assert(e->port_numbers[0] == 0);
     assert(e->padding1==0);
     assert(e->padding2==0);
-    sprintf(buffer, "%.*s:%d:%.*s:%.*s:%u", (int)sizeof(e->ip), e->ip, e->port_number[1],
+    sprintf(buffer, "%.*s:%d:%.*s:%.*s:%u", (int)sizeof(e->ip), e->ip, e->port_numbers[PORT_INDEX],
             (int)sizeof(e->hostname), e->hostname,
-            (int)sizeof(e->flags), e->flags,
+            (int)sizeof(e->options), e->options,
             e->status);
     assert(e->status == EMPTY || e->status == INITIALIZED);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
     if (e->status == EMPTY)
     {
         assert(STR_IS_ZERO(e->ip) == 1);
-        assert(e->port_number[1] == 0);
+        assert(e->port_numbers[PORT_INDEX] == 0);
         assert(STR_IS_ZERO(e->hostname) == 1);
-        assert(STR_IS_ZERO(e->flags) == 1);
+        assert(STR_IS_ZERO(e->options) == 1);
     }
     else
     {
         assert(STR_IS_VALUE(e->ip) == 1 || STR_IS_PHI(e->ip) == 1);
-        assert(e->port_number[1] != 0);
+        assert(e->port_numbers[PORT_INDEX] != 0);
         assert(STR_IS_VALUE(e->hostname) == 1 || STR_IS_PHI(e->hostname) == 1);
-        assert(STR_IS_VALUE(e->flags) == 1|| STR_IS_PHI(e->flags) == 1
-            || STR_IS_ZERO(e->flags) == 1);
+        assert(STR_IS_VALUE(e->options) == 1|| STR_IS_PHI(e->options) == 1
+            || STR_IS_ZERO(e->options) == 1);
     }
 }
 
@@ -328,8 +334,8 @@ struct info
 
 #define MY_PRINT4(stream, struct_ptr, member) \
   my_print4((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
-#define MY_PRINT5(stream, struct_ptr, member) \
-my_print5((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+#define PRINT_MAGIC(stream, struct_ptr, member) \
+print_magic((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define MY_PRINT6(stream, struct_ptr, member) \
 my_print6((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
@@ -352,7 +358,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     }
     memcpy(pinfo, data, size);
 
-    MY_PRINT5(stream, pinfo, magic);
+    PRINT_MAGIC(stream, pinfo, magic);
     int ret = is_buffer_all_zero(pinfo->zeros1, sizeof(pinfo->zeros1));
     assert(ret==1);
     MY_PRINT(stream, pinfo, zeros1);
