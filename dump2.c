@@ -386,6 +386,55 @@ void my_print7(FILE* stream, const char* name, struct str3_1* s, const size_t le
     }
 }
 
+struct tmp
+{
+    uint16_t junk1;
+    uint16_t junk2;
+    //
+    uint16_t value1;
+    uint16_t value2;
+    char uid[0X2C33 - 0X2BF2];
+    char str1[0X2C44 - 0X2C33];
+    char str2[510 - 88 + 2];
+};
+
+struct hardware
+{
+    union
+    {
+        char hardware_id[0x2df0 - 0x2bea - 4];
+        struct tmp tmp;
+    };
+};
+
+
+void print_hardware(FILE* stream, const char* name, struct hardware* h, const size_t len, const size_t offset)
+{
+    assert(sizeof(struct hardware) == len);
+    uint32_t magic;
+    memcpy(&magic, h, sizeof(magic));
+    // '0x4d574d' 5068621
+    if (magic == 0x4d574d) // ASCII 'MWM'
+    {
+        const size_t ll = sizeof(struct tmp);
+        assert(ll == len);
+        const size_t alignment = offset % 4u;
+        struct tmp* tmp = &h->tmp;
+        assert(STR_IS_VALUE(tmp->uid));
+        assert(STR_IS_VALUE(tmp->str1));
+        assert(STR_IS_VALUE(tmp->str2));
+        assert(tmp->value2==0);
+        fprintf(stream, "%04zx %zu %s %zu: [%u: %s:%s:%s]\n", offset, alignment, name, len, tmp->value1,
+                tmp->uid, tmp->str1, tmp->str2
+        );
+    }
+    else
+    {
+        const char* str = h->hardware_id;
+        my_print(stream, name, str, len, offset);
+    }
+}
+
 struct info
 {
     uint32_t magic[2];
@@ -414,7 +463,11 @@ struct info
     char format6[0x2aaa - 0x26A1 - 8];
     // not aligned:
     char fixme1[0x2BEA - 0x2aaa + 8];
+#if 0
     char hardware_id[0x2df0 - 0x2bea - 4];
+#else
+    struct hardware hardware;
+#endif
     uint32_t small_number[1];
     char study_desc[0x2ff0 - 0x2df0];
     uint32_t junk7[1];
@@ -476,6 +529,8 @@ struct info
 my_print7((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define PRINT_ENDPOINT_ALT(stream, struct_ptr, member) \
 print_endpoint_alt((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+#define PRINT_HARDWARE(stream, struct_ptr, member) \
+print_hardware((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
 static void process_canon(FILE* stream, const char* data, const size_t size)
 {
@@ -518,7 +573,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     MY_PRINT(stream, pinfo, format5);
     MY_PRINT(stream, pinfo, format6);
     MY_PRINT(stream, pinfo, fixme1);
-    MY_PRINT(stream, pinfo, hardware_id);
+    PRINT_HARDWARE(stream, pinfo, hardware);
     MY_PRINT2(stream, pinfo, small_number);
     MY_PRINT(stream, pinfo, study_desc);
     MY_PRINT2(stream, pinfo, junk7);
