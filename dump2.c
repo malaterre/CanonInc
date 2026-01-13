@@ -207,8 +207,7 @@ struct endpoint /* 396 */
 
 struct endpoint_alt /* 404 */
 {
-    char ip[0x40 /* 64 */];
-    uint32_t port_number;
+    char ip[0x44 /* 68 */];
     char hostname[0x44 /* 68 */];
     char options[0x104 /* 260 */];
     uint32_t value32;
@@ -290,7 +289,7 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
     MAKE_STR(ip, e->ip);
     MAKE_STR(hostname, e->hostname);
     MAKE_STR(options, e->options);
-    sprintf(buffer, "%s:%u:%s:%s:0x%08x:%u:%u", ip, e->port_number,
+    sprintf(buffer, "%s:%s:%s:0x%08x:%u:%u", ip,
             hostname,
             options,
             e->value32,
@@ -299,7 +298,6 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
     assert(e->status1== EMPTY || e->status1== INITIALIZED);
     assert(e->status2== EMPTY || e->status2== INITIALIZED);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
-    assert(e->port_number == 0);
     assert(value32_valid(e->value32) == 1);
     if (e->status1 == EMPTY)
     {
@@ -395,7 +393,7 @@ struct tmp
     uint16_t value2;
     char uid[0X2C33 - 0X2BF2];
     char str1[0X2C44 - 0X2C33];
-    char str2[510 - 88 + 2];
+    char str2[510 - 86];
 };
 
 struct hardware
@@ -494,7 +492,7 @@ struct info
     uint32_t junk12[4];
     char zeros3[60];
     char dicom_ds[0x3AD0 - 0x36C0 - 8 - 8];
-#if 0
+#if 1
     uint32_t junk13[9];
 #else
     float junk13[9];
@@ -532,7 +530,7 @@ print_endpoint_alt((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)
 #define PRINT_HARDWARE(stream, struct_ptr, member) \
 print_hardware((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
-static void process_canon(FILE* stream, const char* data, const size_t size)
+static void process_canon(FILE* stream, const char* data, const size_t size, const char* fn)
 {
     const size_t SIZE1 = 15148;
     const size_t off1 = offsetof(struct info, padding);
@@ -573,6 +571,14 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     MY_PRINT(stream, pinfo, format5);
     MY_PRINT(stream, pinfo, format6);
     MY_PRINT(stream, pinfo, fixme1);
+    if (0)
+    {
+        char buffer[512];
+        sprintf(buffer, "%s.fixme", fn);
+        FILE* ffixme = fopen(buffer, "wb");
+        fwrite(pinfo->fixme1, 1, sizeof(pinfo->fixme1), ffixme);
+        fclose(ffixme);
+    }
     PRINT_HARDWARE(stream, pinfo, hardware);
     MY_PRINT2(stream, pinfo, small_number);
     MY_PRINT(stream, pinfo, study_desc);
@@ -600,8 +606,8 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     assert(ret==1);
     MY_PRINT(stream, pinfo, zeros3);
     MY_PRINT(stream, pinfo, dicom_ds);
-    //MY_PRINT2(stream, pinfo, junk13);
-    MY_PRINT3(stream, pinfo, junk13);
+    MY_PRINT2(stream, pinfo, junk13);
+    //MY_PRINT3(stream, pinfo, junk13);
     MY_PRINT(stream, pinfo, gender);
     if (size == SIZE2)
     {
@@ -646,7 +652,7 @@ int main(int argc, char* argv[])
     const size_t read_size = fread(buffer, 1, filesize, file);
 
     // Use buffer as needed...
-    process_canon(stdout, buffer, filesize);
+    process_canon(stdout, buffer, filesize, filename);
 
     free(buffer);
     (void)fclose(file);
