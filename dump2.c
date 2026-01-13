@@ -138,61 +138,12 @@ enum STATUS
 
 struct config
 {
-    char zeros[0x84 /* 132 */];
-    char padding1;
-    char options[0x102];
-    char padding2;
+    char zeros[0x84 /* 132 */ + 1];
+    char options[0x102 /* 258 */ + 1];
     uint32_t status; // O or 2
 };
 
-void print_config(FILE* stream, const char* name, struct config* m, const size_t len, const size_t offset)
-{
-    assert(sizeof(struct config) == len);
-    const size_t alignment = offset % 4u;
-    char buffer[512 * 4];
-    assert(len < sizeof(buffer));
-    assert(is_buffer_all_zero(m->zeros, sizeof(m->zeros)) == 1);
-    assert(m->padding1==0);
-    sprintf(buffer, "%.*s:%.*s:%u", (int)sizeof(m->zeros), m->zeros,
-            (int)sizeof(m->options), m->options,
-            m->status);
-    assert(m->status == EMPTY || m->status == INITIALIZED);
-    fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
-}
-
-struct endpoint /* 396 */
-{
-    char ip[0x40 /* 64 */];
-    uint16_t port_numbers[2];
-    char hostname[0x40];
-    char padding1;
-    char options[0x102];
-    char padding2;
-    uint32_t status; // 0 or 2
-};
-
-struct endpoint_alt /* 404 */
-{
-    char ip[0x40 /* 64 */];
-    uint32_t port_number;
-    char hostname[0x44 /* 68 */];
-    char options[0x104 /* 260 */];
-    uint32_t value32;
-    uint32_t status; // 0 or 2
-};
-
-enum PORTS
-{
-    PORT_INDEX = 1
-};
-
-enum MAGIC
-{
-    MAGIC_VALUE0 = 0x41414141, // ASCII 'AAAA'
-    MAGIC_VALUE1 = 0x1
-};
-
-size_t make_str(char* out, size_t out_len, const char* in, size_t in_len)
+size_t make_str(char* out, const size_t out_len, const char* in, const size_t in_len)
 {
     assert(out_len > 0);
     assert(in_len > 0);
@@ -215,18 +166,67 @@ size_t make_str(char* out, size_t out_len, const char* in, size_t in_len)
         out[0] = '?';
         out[0] = ' ';
         const size_t ret = strlen(out);
-        assert(ret < in_len);
+        assert(ret <= in_len);
         assert(is_buffer_all_zero(out + ret, in_len - ret) == 1);
         return ret;
     }
     // VALUE case
     const size_t ret = strlen(out);
+    assert(ret <= in_len);
     assert(is_buffer_all_zero(out+ret, in_len - ret) == 1);
     return ret;
 }
 
 #define MAKE_STR(out, in) \
 make_str(out, sizeof(out), (in), sizeof(in))
+
+void print_config(FILE* stream, const char* name, struct config* m, const size_t len, const size_t offset)
+{
+    assert(sizeof(struct config) == len);
+    const size_t alignment = offset % 4u;
+    char options[512];
+    MAKE_STR(options, m->options);
+    char buffer[512 * 4];
+    assert(len < sizeof(buffer));
+    assert(is_buffer_all_zero(m->zeros, sizeof(m->zeros)) == 1);
+    sprintf(buffer, "%.*s:%s:%u", (int)sizeof(m->zeros), m->zeros,
+            options,
+            m->status);
+    assert(m->status == EMPTY || m->status == INITIALIZED);
+    fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
+}
+
+struct endpoint /* 396 */
+{
+    char ip[0x40 /* 64 */];
+    uint16_t port_numbers[2];
+    char hostname[0x40 /* 64 */ + 1];
+    char options[0x102 /* 258 */ + 1];
+    uint32_t status; // 0 or 2
+};
+
+struct endpoint_alt /* 404 */
+{
+    char ip[0x40 /* 64 */];
+    uint32_t port_number;
+    char hostname[0x44 /* 68 */];
+    char options[0x104 /* 260 */];
+    uint32_t value32;
+    uint32_t status1; // 0 or 2
+    uint32_t status2; // 0 or 2
+};
+
+enum PORTS
+{
+    PORT_INDEX = 1
+};
+
+enum MAGIC
+{
+    MAGIC_VALUE0 = 0x41414141, // ASCII 'AAAA'
+    MAGIC_VALUE1 = 0x1
+};
+
 
 void print_endpoint(FILE* stream, const char* name, struct endpoint* e, const size_t len, const size_t offset)
 {
@@ -236,8 +236,6 @@ void print_endpoint(FILE* stream, const char* name, struct endpoint* e, const si
     char buffer[512 * 4];
     assert(len < sizeof(buffer));
     assert(e->port_numbers[0] == 0);
-    assert(e->padding1==0);
-    assert(e->padding2==0);
     char ip[512];
     char hostname[512];
     char options[512];
@@ -292,16 +290,18 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
     MAKE_STR(ip, e->ip);
     MAKE_STR(hostname, e->hostname);
     MAKE_STR(options, e->options);
-    sprintf(buffer, "%s:%u:%s:%s:0x%08x:%u", ip, e->port_number,
+    sprintf(buffer, "%s:%u:%s:%s:0x%08x:%u:%u", ip, e->port_number,
             hostname,
             options,
             e->value32,
-            e->status);
-    assert(e->status== EMPTY || e->status== INITIALIZED);
+            e->status1,
+            e->status2);
+    assert(e->status1== EMPTY || e->status1== INITIALIZED);
+    assert(e->status2== EMPTY || e->status2== INITIALIZED);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
     assert(e->port_number == 0);
     assert(value32_valid(e->value32) == 1);
-    if (e->status == EMPTY)
+    if (e->status1 == EMPTY)
     {
         assert(STR_IS_ZERO(e->ip) == 1);
         assert(STR_IS_ZERO(e->hostname) == 1);
@@ -342,17 +342,14 @@ void my_print6(FILE* stream, const char* name, struct junk5* j, const size_t len
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
 }
 
-typedef char string256[0x100 /*256*/];
-typedef char string512[0x200 /*512*/];
+typedef char string256[0x100 /*256*/ + 1];
+typedef char string512[0x200 /*512*/ + 2];
 
 struct str3_1 /* 1028 */
 {
     string256 caltype;
-    char padding1;
     string256 cdc;
-    char padding2;
     string512 cc;
-    uint16_t status;
 };
 
 void my_print7(FILE* stream, const char* name, struct str3_1* s, const size_t len, const size_t offset)
@@ -362,9 +359,6 @@ void my_print7(FILE* stream, const char* name, struct str3_1* s, const size_t le
     assert(alignment==0);
     char buffer[512 * 4];
     assert(len < sizeof(buffer));
-    assert(s->padding1==0);
-    assert(s->padding2==0);
-    assert(s->status==0);
     assert(STR_IS_VALUE(s->caltype));
     assert(STR_IS_VALUE(s->cdc));
     const size_t cc_len1 = strlen(s->cc);
@@ -429,13 +423,12 @@ struct info
     /* start endpoint */
     struct endpoint_alt endpoint_alt1;
     /* end endpoint */
-    uint32_t two_states5[1]; // 0 or 2
-    uint32_t junk9[10 - 3];
+    uint32_t junk9[7];
     /* start endpoint */
     struct endpoint_alt endpoint_alt2;
     /* end endpoint */
-    uint32_t two_states7[1]; // 0 or 2
-    uint32_t junk10[48 - 3];
+    uint32_t junk10[11];
+    char zeros2[136];
     char service_name2[0x34A4 - 0x3458];
     char aetitle1[0x34E8 - 0x34A4];
     char aetitle3[0x352C - 0x34E8];
@@ -445,7 +438,8 @@ struct info
     uint32_t junk11[12];
     char orientation1[0x3630 - 0x35EC];
     char orientation2[0x3674 - 0x3630];
-    uint32_t junk12[19];
+    uint32_t junk12[4];
+    char zeros3[60];
     char dicom_ds[0x3AD0 - 0x36C0 - 8 - 8];
 #if 0
     uint32_t junk13[9];
@@ -531,11 +525,12 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     MY_PRINT(stream, pinfo, versions);
     MY_PRINT2(stream, pinfo, junk8);
     PRINT_ENDPOINT_ALT(stream, pinfo, endpoint_alt1);
-    MY_PRINT2(stream, pinfo, two_states5);
     MY_PRINT2(stream, pinfo, junk9);
     PRINT_ENDPOINT_ALT(stream, pinfo, endpoint_alt2);
-    MY_PRINT2(stream, pinfo, two_states7);
     MY_PRINT2(stream, pinfo, junk10);
+    ret = is_buffer_all_zero(pinfo->zeros2, sizeof(pinfo->zeros2));
+    assert(ret==1);
+    MY_PRINT(stream, pinfo, zeros2);
     MY_PRINT(stream, pinfo, service_name2);
     MY_PRINT(stream, pinfo, aetitle1);
     MY_PRINT(stream, pinfo, aetitle3);
@@ -546,6 +541,9 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     MY_PRINT(stream, pinfo, orientation1);
     MY_PRINT(stream, pinfo, orientation2);
     MY_PRINT2(stream, pinfo, junk12);
+    ret = is_buffer_all_zero(pinfo->zeros3, sizeof(pinfo->zeros3));
+    assert(ret==1);
+    MY_PRINT(stream, pinfo, zeros3);
     MY_PRINT(stream, pinfo, dicom_ds);
     //MY_PRINT2(stream, pinfo, junk13);
     MY_PRINT3(stream, pinfo, junk13);

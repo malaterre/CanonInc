@@ -176,7 +176,7 @@ struct info_18748
     char padding[0x3CC4 - 0x3B2C];
     char mode[0x42DC - 0x3CC4];
     char left_right[0x48F4 - 0x42DC];
-    char series_name[0x493B - 0x48F4];
+    char series_name[0x493B - 0x48F4 + 1];
 };
 
 #define MY_PRINT(stream, struct_ptr, member) \
