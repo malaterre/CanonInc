@@ -366,7 +366,7 @@ void my_print7(FILE* stream, const char* name, struct str3_1* s, const size_t le
     {
         // FIXME: this *really* looks like digital trash:
         assert(is_value(cc2, sizeof(s->cc) - cc_len1 - 1) == 1);
-        fprintf(stream, "%04zx %zu %s %zu: [\n\t%zu: %s\n\t%zu: %s\n\t%zu: %s\n\t%zu: %s\n\t]\n", offset, alignment,
+        fprintf(stream, "%04zx %zu %s %zu: [\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t]\n", offset, alignment,
                 name, len,
                 strlen(s->caltype), s->caltype,
                 strlen(s->cdc), s->cdc,
@@ -377,7 +377,7 @@ void my_print7(FILE* stream, const char* name, struct str3_1* s, const size_t le
     else
     {
         assert(STR_IS_VALUE(s->cc));
-        fprintf(stream, "%04zx %zu %s %zu: [\n\t%zu: %s\n\t%zu: %s\n\t%zu: %s\n\t]\n", offset, alignment, name, len,
+        fprintf(stream, "%04zx %zu %s %zu: [\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t]\n", offset, alignment, name, len,
                 strlen(s->caltype), s->caltype,
                 strlen(s->cdc), s->cdc,
                 strlen(s->cc), s->cc);
@@ -431,6 +431,34 @@ void print_hardware(FILE* stream, const char* name, struct hardware* h, const si
         const char* str = h->hardware_id;
         my_print(stream, name, str, len, offset);
     }
+}
+
+struct junk13
+{
+    uint32_t zeros[2];
+    uint32_t value32;
+#if 0
+    uint32_t junk13[6];
+#else
+    uint32_t v1;
+    float f1;
+    uint32_t v2;
+    float f2;
+    uint32_t v3;
+    float f3;
+#endif
+};
+
+void print_junk13(FILE* stream, const char* name, struct junk13* j, const size_t len, const size_t offset)
+{
+    assert(sizeof(struct junk13) == len);
+    const size_t alignment = offset % 4u;
+    assert(j->zeros[0] == 0);
+    assert(j->zeros[1] == 0);
+    fprintf(stream, "%04zx %zu %s %zu: [%u:%u:%g:%u:%g:%u:%g]\n", offset, alignment, name, len, j->value32,
+            j->v1, j->f1,
+            j->v2, j->f2,
+            j->v3, j->f3);
 }
 
 struct info
@@ -492,10 +520,10 @@ struct info
     uint32_t junk12[4];
     char zeros3[60];
     char dicom_ds[0x3AD0 - 0x36C0 - 8 - 8];
-#if 1
+#if 0
     uint32_t junk13[9];
 #else
-    float junk13[9];
+    struct junk13 junk13;
 #endif
     char gender[0x3B2C - 0x3AE4];
     char padding[0x3CC4 - 0x3B2C];
@@ -529,6 +557,8 @@ my_print7((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member)
 print_endpoint_alt((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define PRINT_HARDWARE(stream, struct_ptr, member) \
 print_hardware((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+#define PRINT_JUNK13(stream, struct_ptr, member) \
+print_junk13((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
 static void process_canon(FILE* stream, const char* data, const size_t size, const char* fn)
 {
@@ -606,8 +636,8 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     assert(ret==1);
     MY_PRINT(stream, pinfo, zeros3);
     MY_PRINT(stream, pinfo, dicom_ds);
-    MY_PRINT2(stream, pinfo, junk13);
-    //MY_PRINT3(stream, pinfo, junk13);
+    //MY_PRINT2(stream, pinfo, junk13);
+    PRINT_JUNK13(stream, pinfo, junk13);
     MY_PRINT(stream, pinfo, gender);
     if (size == SIZE2)
     {
