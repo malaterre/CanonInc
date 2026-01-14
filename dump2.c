@@ -271,6 +271,7 @@ int value32_valid(const uint32_t value32)
         || value32 == 0x10000
         || value32 == 0x10001
         || value32 == 0x1000000
+        || value32 == 0x1000001
     )
         return 1;
     return 0;
@@ -490,6 +491,11 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
         || j->u[1] == 0x1
         || j->u[1] == 0x100
         || j->u[1] == 0x101
+        || j->u[1] == 0x60000
+        || j->u[1] == 0x60001
+        || j->u[1] == 0x60100
+        || j->u[1] == 0x60101
+        || j->u[1] == 0x70000
         || j->u[1] == 0x70001
         || j->u[1] == 0x70101
     );
@@ -501,9 +507,13 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
     assert(j->hexs[0] == 0 || j->hexs[0] == 0x8000);
     assert(j->hexs[1] == 0
         || j->hexs[1] == 0x8000
+        || j->hexs[1] == 0x40008000
         || j->hexs[1] == 0x40078000
+        || j->hexs[1] == 0x4e008000
+        || j->hexs[1] == 0x4e078000
         || j->hexs[1] == 0x50000000
         || j->hexs[1] == 0x50008000
+        || j->hexs[1] == 0x50078000
     );
 }
 
@@ -586,7 +596,8 @@ struct info
     struct endpoint_alt endpoint_alt2;
     /* end endpoint */
     uint32_t junk10[11];
-    char zeros2[136];
+    char datetime1[68];
+    char datetime2[136 - 68];
     char service_name2[0x34A4 - 0x3458];
     char aetitle1[0x34E8 - 0x34A4];
     char aetitle3[0x352C - 0x34E8];
@@ -605,7 +616,7 @@ struct info
     char orientation1[0x3630 - 0x35EC];
     char orientation2[0x3674 - 0x3630];
     uint32_t junk12[4];
-    char zeros3[60];
+    char laterality[60];
     char dicom_ds[0x3AD0 - 0x36C0 - 8 - 8];
 #if 0
     uint32_t junk13[9];
@@ -614,8 +625,12 @@ struct info
 #endif
     char gender[0x3B2C - 0x3AE4];
     char padding[0x3CC4 - 0x3B2C];
-    char mode[0x42DC - 0x3CC4];
-    char left_right[0x48F4 - 0x42DC];
+    char mode1[0x3DC8 - 0x3CC4];
+    char mode2[0x3ECC - 0x3DC8];
+    char mode3[0x42DC - 0x3ECC];
+    char left_right[0x43E0 - 0x42DC];
+    char site_name1[0x44E4 - 0x43E0];
+    char site_name2[0x48F4 - 0x44E4];
     char series_name[0x493A - 0x48F4 + 2];
 };
 
@@ -715,9 +730,10 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT2(stream, pinfo, junk9);
     PRINT_ENDPOINT_ALT(stream, pinfo, endpoint_alt2);
     MY_PRINT2(stream, pinfo, junk10);
-    ret = is_buffer_all_zero(pinfo->zeros2, sizeof(pinfo->zeros2));
-    assert(ret==1);
-    MY_PRINT(stream, pinfo, zeros2);
+    //ret = is_buffer_all_zero(pinfo->zeros2, sizeof(pinfo->zeros2));
+    //assert(ret==1);
+    MY_PRINT(stream, pinfo, datetime1);
+    MY_PRINT(stream, pinfo, datetime2);
     MY_PRINT(stream, pinfo, service_name2);
     MY_PRINT(stream, pinfo, aetitle1);
     MY_PRINT(stream, pinfo, aetitle3);
@@ -732,19 +748,21 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, orientation1);
     MY_PRINT(stream, pinfo, orientation2);
     MY_PRINT2(stream, pinfo, junk12);
-    ret = is_buffer_all_zero(pinfo->zeros3, sizeof(pinfo->zeros3));
-    assert(ret==1);
-    MY_PRINT(stream, pinfo, zeros3);
+    MY_PRINT(stream, pinfo, laterality);
     MY_PRINT(stream, pinfo, dicom_ds);
     //MY_PRINT2(stream, pinfo, junk13);
     PRINT_JUNK13(stream, pinfo, junk13);
-    if (size == SIZE1)
+    if (size >= SIZE1)
         MY_PRINT(stream, pinfo, gender);
-    if (size == SIZE2)
+    if (size >= SIZE2)
     {
         MY_PRINT(stream, pinfo, padding);
-        MY_PRINT(stream, pinfo, mode);
+        MY_PRINT(stream, pinfo, mode1);
+        MY_PRINT(stream, pinfo, mode2);
+        MY_PRINT(stream, pinfo, mode3);
         MY_PRINT(stream, pinfo, left_right);
+        MY_PRINT(stream, pinfo, site_name1);
+        MY_PRINT(stream, pinfo, site_name2);
         MY_PRINT(stream, pinfo, series_name);
     }
     free(pinfo);

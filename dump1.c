@@ -174,7 +174,8 @@ struct info_18748
 {
     struct info_common common;
     char padding[0x3CC4 - 0x3B2C];
-    char mode[0x42DC - 0x3CC4];
+    char mode1[0x3DC8 - 0x3CC4];
+    char mode2[0x42DC - 0x3DC8];
     char left_right[0x48F4 - 0x42DC];
     char series_name[0x493B - 0x48F4 + 1];
 };
@@ -292,7 +293,8 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     {
         struct info_18748* pinfo1 = pinfo0;
         MY_PRINT3(stream, pinfo1, padding);
-        MY_PRINT3(stream, pinfo1, mode);
+        MY_PRINT3(stream, pinfo1, mode1);
+        MY_PRINT3(stream, pinfo1, mode2);
         MY_PRINT3(stream, pinfo1, left_right);
         MY_PRINT3(stream, pinfo1, series_name);
     }
