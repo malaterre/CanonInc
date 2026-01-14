@@ -37,7 +37,7 @@ int is_phi(const char* str, const size_t len)
         buffer[len] = '\0';
         buffer[0] = ' ';
         const size_t l2 = strlen(buffer);
-        assert(l2>2);
+        assert(l2>=2);
         const int ret2 = is_buffer_all_zero(buffer + l2, len - l2);
         assert(ret2);
         return 1;
@@ -435,6 +435,23 @@ void print_hardware(FILE* stream, const char* name, struct hardware* h, const si
     }
 }
 
+struct service_name
+{
+    char service_name[0x35B8 - 0x3570];
+    uint32_t enabled;
+};
+
+void print_service_name(FILE* stream, const char* name, struct service_name* j, const size_t len, const size_t offset)
+{
+    assert(sizeof(struct service_name) == len);
+    const size_t alignment = offset % 4u;
+    if (j->enabled == 1)
+        assert(STR_IS_VALUE(j->service_name) == 1);
+    if (j->enabled == 0)
+        assert(STR_IS_ZERO(j->service_name) == 1);
+    fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, j->service_name);
+}
+
 struct junk11
 {
     uint32_t u32;
@@ -493,7 +510,7 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
 struct junk13
 {
     uint32_t zeros[2];
-    uint32_t value32;
+    uint32_t hex;
 #if 0
     uint32_t junk13[6];
 #else
@@ -512,7 +529,12 @@ void print_junk13(FILE* stream, const char* name, struct junk13* j, const size_t
     const size_t alignment = offset % 4u;
     assert(j->zeros[0] == 0);
     assert(j->zeros[1] == 0);
-    fprintf(stream, "%04zx %zu %s %zu: [%u:%u:%g:%u:%g:%u:%g]\n", offset, alignment, name, len, j->value32,
+    assert(j->hex == 0x0
+        || j->hex == 0x00010001
+        || j->hex == 0x01000100
+    );
+    assert(j->v1 == 0);
+    fprintf(stream, "%04zx %zu %s %zu: [%08x:%u:%g:%u:%g:%u:%g]\n", offset, alignment, name, len, j->hex,
             j->v1, j->f1,
             j->v2, j->f2,
             j->v3, j->f3);
@@ -569,8 +591,12 @@ struct info
     char aetitle1[0x34E8 - 0x34A4];
     char aetitle3[0x352C - 0x34E8];
     char app_name[0x3570 - 0x352C];
+#if 0
     char service_name3[0x35B8 - 0x3570];
     uint32_t service_name3_status[1];
+#else
+    struct service_name service_name;
+#endif
 #if 0
     uint32_t junk11[12];
 #else
@@ -618,6 +644,8 @@ my_print7((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member)
 print_endpoint_alt((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define PRINT_HARDWARE(stream, struct_ptr, member) \
 print_hardware((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+#define PRINT_SERVICE_NAME(stream, struct_ptr, member) \
+print_service_name((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define PRINT_JUNK11(stream, struct_ptr, member) \
 print_junk11((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define PRINT_JUNK13(stream, struct_ptr, member) \
@@ -625,13 +653,18 @@ print_junk13((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->memb
 
 static void process_canon(FILE* stream, const char* data, const size_t size, const char* fn)
 {
+    const size_t SIZE0 = 15076;
+    const size_t off0 = offsetof(struct info, gender);
+    assert(off0==SIZE0);
     const size_t SIZE1 = 15148;
     const size_t off1 = offsetof(struct info, padding);
     assert(off1==SIZE1);
     const size_t SIZE2 = 18748; // 4687 * 4
     const size_t s2 = sizeof(struct info);
     assert(s2==SIZE2);
-    assert(size == SIZE1 || size == SIZE2);
+    assert(size == SIZE0
+        || size == SIZE1
+        || size == SIZE2);
     struct info* pinfo = malloc(sizeof(struct info));
     if (!pinfo)
     {
@@ -689,8 +722,12 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, aetitle1);
     MY_PRINT(stream, pinfo, aetitle3);
     MY_PRINT(stream, pinfo, app_name);
+#if 0
     MY_PRINT(stream, pinfo, service_name3);
     MY_PRINT2(stream, pinfo, service_name3_status);
+#else
+    PRINT_SERVICE_NAME(stream, pinfo, service_name);
+#endif
     PRINT_JUNK11(stream, pinfo, junk11);
     MY_PRINT(stream, pinfo, orientation1);
     MY_PRINT(stream, pinfo, orientation2);
@@ -701,7 +738,8 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, dicom_ds);
     //MY_PRINT2(stream, pinfo, junk13);
     PRINT_JUNK13(stream, pinfo, junk13);
-    MY_PRINT(stream, pinfo, gender);
+    if (size == SIZE1)
+        MY_PRINT(stream, pinfo, gender);
     if (size == SIZE2)
     {
         MY_PRINT(stream, pinfo, padding);
