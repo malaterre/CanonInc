@@ -366,7 +366,8 @@ void my_print7(FILE* stream, const char* name, struct str3_1* s, const size_t le
     {
         // FIXME: this *really* looks like digital trash:
         assert(is_value(cc2, sizeof(s->cc) - cc_len1 - 1) == 1);
-        fprintf(stream, "%04zx %zu %s %zu: [\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t]\n", offset, alignment,
+        fprintf(stream, "%04zx %zu %s %zu: [\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t]\n", offset,
+                alignment,
                 name, len,
                 strlen(s->caltype), s->caltype,
                 strlen(s->cdc), s->cdc,
@@ -377,7 +378,8 @@ void my_print7(FILE* stream, const char* name, struct str3_1* s, const size_t le
     else
     {
         assert(STR_IS_VALUE(s->cc));
-        fprintf(stream, "%04zx %zu %s %zu: [\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t]\n", offset, alignment, name, len,
+        fprintf(stream, "%04zx %zu %s %zu: [\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t]\n", offset, alignment, name,
+                len,
                 strlen(s->caltype), s->caltype,
                 strlen(s->cdc), s->cdc,
                 strlen(s->cc), s->cc);
@@ -431,6 +433,61 @@ void print_hardware(FILE* stream, const char* name, struct hardware* h, const si
         const char* str = h->hardware_id;
         my_print(stream, name, str, len, offset);
     }
+}
+
+struct junk11
+{
+    uint32_t u32;
+    uint32_t hexs[2];
+    uint32_t zeros;
+    uint32_t bools[2];
+    uint32_t u[2];
+    uint32_t zeros2;
+    uint32_t v;
+    uint32_t zeros3;
+    uint32_t w;
+};
+
+void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t len, const size_t offset)
+{
+    assert(sizeof(struct junk11) == len);
+    const size_t alignment = offset % 4u;
+    fprintf(stream, "%04zx %zu %s %zu: [%08u:%x:%x:%u:%u:%x:%x:%u:%u]\n", offset, alignment, name, len, j->u32,
+            j->hexs[0], j->hexs[1],
+            j->bools[0], j->bools[1],
+            j->u[0], j->u[1],
+            j->v, j->w
+    );
+    assert(j->u[0] == 0x0
+        || j->u[0] == 0x52
+        || j->u[0] == 0x520000
+        || j->u[0] == 0x4e0000
+    );
+    assert(j->v == 0x0
+        || j->v == 0x3c /* 60 */
+    );
+    assert(j->w == 0x0
+        || j->w == 0x3c /* 60 */
+    );
+    assert(j->u[1] == 0x0
+        || j->u[1] == 0x1
+        || j->u[1] == 0x100
+        || j->u[1] == 0x101
+        || j->u[1] == 0x70001
+        || j->u[1] == 0x70101
+    );
+    assert(j->zeros == 0);
+    assert(j->zeros2 == 0);
+    assert(j->zeros3 == 0);
+    assert(j->bools[0] == 0 || j->bools[0] == 1);
+    assert(j->bools[1] == 0 || j->bools[1] == 1);
+    assert(j->hexs[0] == 0 || j->hexs[0] == 0x8000);
+    assert(j->hexs[1] == 0
+        || j->hexs[1] == 0x8000
+        || j->hexs[1] == 0x40078000
+        || j->hexs[1] == 0x50000000
+        || j->hexs[1] == 0x50008000
+    );
 }
 
 struct junk13
@@ -514,7 +571,11 @@ struct info
     char app_name[0x3570 - 0x352C];
     char service_name3[0x35B8 - 0x3570];
     uint32_t service_name3_status[1];
+#if 0
     uint32_t junk11[12];
+#else
+    struct junk11 junk11;
+#endif
     char orientation1[0x3630 - 0x35EC];
     char orientation2[0x3674 - 0x3630];
     uint32_t junk12[4];
@@ -557,6 +618,8 @@ my_print7((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member)
 print_endpoint_alt((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define PRINT_HARDWARE(stream, struct_ptr, member) \
 print_hardware((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+#define PRINT_JUNK11(stream, struct_ptr, member) \
+print_junk11((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define PRINT_JUNK13(stream, struct_ptr, member) \
 print_junk13((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
@@ -628,7 +691,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, app_name);
     MY_PRINT(stream, pinfo, service_name3);
     MY_PRINT2(stream, pinfo, service_name3_status);
-    MY_PRINT2(stream, pinfo, junk11);
+    PRINT_JUNK11(stream, pinfo, junk11);
     MY_PRINT(stream, pinfo, orientation1);
     MY_PRINT(stream, pinfo, orientation2);
     MY_PRINT2(stream, pinfo, junk12);
