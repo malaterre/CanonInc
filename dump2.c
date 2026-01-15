@@ -535,6 +535,7 @@ void print_junk13(FILE* stream, const char* name, struct junk13* j, const size_t
     assert(j->zeros[0] == 0);
     assert(j->zeros[1] == 0);
     assert(j->hex == 0x0
+        || j->hex == 0x100
         || j->hex == 0x00010001
         || j->hex == 0x01000100
     );
