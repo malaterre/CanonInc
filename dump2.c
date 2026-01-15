@@ -449,7 +449,7 @@ struct junk11
 {
     uint32_t u32;
     uint32_t hexs[2];
-    uint32_t zeros;
+    uint32_t zeros1;
     uint32_t bools[2];
     uint32_t u[2];
     uint32_t zeros2;
@@ -490,8 +490,9 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
         || j->u[1] == 0x70000
         || j->u[1] == 0x70001
         || j->u[1] == 0x70101
+        || j->u[1] == 0xffff0000
     );
-    assert(j->zeros == 0);
+    assert(j->zeros1 == 0);
     assert(j->zeros2 == 0);
     assert(j->zeros3 == 0);
     assert(j->bools[0] == 0 || j->bools[0] == 1);
