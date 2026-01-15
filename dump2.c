@@ -59,8 +59,7 @@ int is_value(const char* str, const size_t len)
     buffer[len] = '\0';
     const size_t l = strlen(buffer);
     const int ret = is_buffer_all_zero(str + l, len - l);
-    assert(ret == 1);
-    return 1;
+    return ret;
 }
 
 
@@ -363,28 +362,21 @@ void my_print7(FILE* stream, const char* name, struct str3_1* s, const size_t le
     const size_t cc_len1 = strlen(s->cc);
     const char* cc2 = s->cc + cc_len1 + 1;
     const size_t cc_len2 = strlen(cc2);
-    if (cc_len2 != 0)
+    const int ret = is_buffer_all_zero(cc2, len - cc_len1 - 1);
+    if (ret == 0)
     {
         // FIXME: this *really* looks like digital trash:
-        assert(is_value(cc2, sizeof(s->cc) - cc_len1 - 1) == 1);
-        fprintf(stream, "%04zx %zu %s %zu: [\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t]\n", offset,
-                alignment,
-                name, len,
-                strlen(s->caltype), s->caltype,
-                strlen(s->cdc), s->cdc,
-                strlen(s->cc), s->cc,
-                strlen(cc2), cc2
-        );
+        //assert(is_value(cc2, sizeof(s->cc) - cc_len1 - 1) == 1);
     }
     else
     {
         assert(STR_IS_VALUE(s->cc));
-        fprintf(stream, "%04zx %zu %s %zu: [\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t]\n", offset, alignment, name,
-                len,
-                strlen(s->caltype), s->caltype,
-                strlen(s->cdc), s->cdc,
-                strlen(s->cc), s->cc);
     }
+    fprintf(stream, "%04zx %zu %s %zu: [\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t]\n", offset, alignment, name,
+            len,
+            strlen(s->caltype), s->caltype,
+            strlen(s->cdc), s->cdc,
+            strlen(s->cc), s->cc);
 }
 
 struct tmp
@@ -564,12 +556,13 @@ struct info
     struct junk5 junk5;
     struct str3_1 str3_1;
     char am[0x0c96 - 0x0a94];
-    char pos1[0x0d97 - 0x0c96];
-    char pos2[0x0e98 - 0x0d97];
-    char pos3[0x0f99 - 0x0e98];
-    char pos4[0x109a - 0x0f99];
-    char pos5[0x119b - 0x109a];
-    char pos6[0x129c - 0x119b];
+    // 'Swiss721 BT' is an actual font name:
+    char font1[0x0d97 - 0x0c96];
+    char font2[0x0e98 - 0x0d97];
+    char font3[0x0f99 - 0x0e98];
+    char font4[0x109a - 0x0f99];
+    char font5[0x119b - 0x109a];
+    char font6[0x129c - 0x119b];
     char format1[0x169d - 0x129c];
     char format2[0x1a9e - 0x169d];
     char format3[0x1e9f - 0x1a9e];
@@ -699,12 +692,12 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT6(stream, pinfo, junk5);
     MY_PRINT7(stream, pinfo, str3_1);
     MY_PRINT(stream, pinfo, am);
-    MY_PRINT(stream, pinfo, pos1);
-    MY_PRINT(stream, pinfo, pos2);
-    MY_PRINT(stream, pinfo, pos3);
-    MY_PRINT(stream, pinfo, pos4);
-    MY_PRINT(stream, pinfo, pos5);
-    MY_PRINT(stream, pinfo, pos6);
+    MY_PRINT(stream, pinfo, font1);
+    MY_PRINT(stream, pinfo, font2);
+    MY_PRINT(stream, pinfo, font3);
+    MY_PRINT(stream, pinfo, font4);
+    MY_PRINT(stream, pinfo, font5);
+    MY_PRINT(stream, pinfo, font6);
     MY_PRINT(stream, pinfo, format1);
     MY_PRINT(stream, pinfo, format2);
     MY_PRINT(stream, pinfo, format3);
