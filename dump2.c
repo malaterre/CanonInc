@@ -452,7 +452,7 @@ struct junk11
     uint32_t zeros1;
     uint32_t bools[2];
     uint32_t u[2];
-    uint32_t zeros2;
+    uint32_t small_value1;
     uint32_t v;
     uint32_t zeros3;
     uint32_t w;
@@ -495,7 +495,7 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
         || j->u[1] == 0xffff0101
     );
     assert(j->zeros1 == 0);
-    assert(j->zeros2 == 0);
+    assert(j->small_value1 == 0 || j->small_value1 == 3);
     assert(j->zeros3 == 0);
     assert(j->bools[0] == 0 || j->bools[0] == 1);
     assert(j->bools[1] == 0 || j->bools[1] == 1);
