@@ -271,6 +271,7 @@ int value32_valid(const uint32_t value32)
         || value32 == 0x10001
         || value32 == 0x1000000
         || value32 == 0x1000001
+        || value32 == 0x1010000
     )
         return 1;
     return 0;
@@ -544,6 +545,7 @@ void print_junk13(FILE* stream, const char* name, struct junk13* j, const size_t
         || j->hex == 0x100
         || j->hex == 0x00010001
         || j->hex == 0x01000100
+        || j->hex == 0x01010101
     );
     fprintf(stream, "%04zx %zu %s %zu: [%08x:%u:%g:%u:%g:%u:%g]\n", offset, alignment, name, len, j->hex,
             j->v1, j->f1,
