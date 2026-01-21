@@ -621,7 +621,8 @@ struct info
     char orientation2[0x3674 - 0x3630];
     uint32_t junk12[4];
     char laterality[60];
-    char dicom_ds[0x3AD0 - 0x36C0 - 8 - 8];
+    char dicom_ds1[0x38C4 - 0x36C0];
+    char dicom_ds2[0x3AC0 - 0X38C4 ];
 #if 0
     uint32_t junk13[9];
 #else
@@ -753,7 +754,8 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, orientation2);
     MY_PRINT2(stream, pinfo, junk12);
     MY_PRINT(stream, pinfo, laterality);
-    MY_PRINT(stream, pinfo, dicom_ds);
+    MY_PRINT(stream, pinfo, dicom_ds1);
+    MY_PRINT(stream, pinfo, dicom_ds2);
     //MY_PRINT2(stream, pinfo, junk13);
     PRINT_JUNK13(stream, pinfo, junk13);
     if (size >= SIZE1)
