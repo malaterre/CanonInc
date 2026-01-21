@@ -544,7 +544,6 @@ void print_junk13(FILE* stream, const char* name, struct junk13* j, const size_t
         || j->hex == 0x00010001
         || j->hex == 0x01000100
     );
-    assert(j->v1 == 0);
     fprintf(stream, "%04zx %zu %s %zu: [%08x:%u:%g:%u:%g:%u:%g]\n", offset, alignment, name, len, j->hex,
             j->v1, j->f1,
             j->v2, j->f2,
