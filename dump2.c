@@ -430,7 +430,8 @@ void print_hardware(FILE* stream, const char* name, struct hardware* h, const si
 
 struct service_name
 {
-    char service_name[0x35B8 - 0x3570];
+    char service_name[0x35B8 - 0x3570 - 4];
+    uint32_t status;
     uint32_t enabled;
 };
 
@@ -442,6 +443,7 @@ void print_service_name(FILE* stream, const char* name, struct service_name* j, 
         assert(STR_IS_VALUE(j->service_name) == 1);
     if (j->enabled == 0)
         assert(STR_IS_ZERO(j->service_name) == 1);
+    if (j->status == 0 ||j->status == 2);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, j->service_name);
 }
 
