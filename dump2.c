@@ -486,6 +486,7 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
     );
     assert(j->u[0] == 0x0
         || j->u[0] == 0x52
+        || j->u[0] == 0x63
         || j->u[0] == 0x520000
         || j->u[0] == 0x4e0000
     );
