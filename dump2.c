@@ -448,8 +448,8 @@ void print_service_name(FILE* stream, const char* name, struct service_name* j, 
         assert(STR_IS_VALUE(j->service_name) == 1);
     if (j->enabled == 0)
         assert(STR_IS_ZERO(j->service_name) == 1);
-    assert(j->enabled == 0|| j->enabled == 1);
-    assert(j->status == 0 || j->status == 2);
+    assert(j->enabled == 0 || j->enabled == 1);
+    assert(j->status == EMPTY || j->status == INITIALIZED);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, j->service_name);
 }
 
