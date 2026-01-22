@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -179,8 +180,9 @@ size_t make_str(char* out, const size_t out_len, const char* in, const size_t in
     // VALUE case
     const size_t ret = strlen(out);
     assert(ret <= in_len);
-    assert(is_buffer_all_zero(out+ret, in_len - ret) == 1);
-    return ret;
+    if (is_buffer_all_zero(out + ret, in_len - ret) == 1)
+        return ret;
+    return -1;
 }
 
 #define MAKE_STR(out, in) \
@@ -244,13 +246,19 @@ void print_endpoint(FILE* stream, const char* name, struct endpoint* e, const si
     char ip[512];
     char hostname[512];
     char options[512];
+    size_t ret;
     MAKE_STR(ip, e->ip);
-    MAKE_STR(hostname, e->hostname);
+    bool trash = false;
+    ret = MAKE_STR(hostname, e->hostname);
+    if (ret == (size_t)-1)
+    {
+        trash = true;
+    }
     MAKE_STR(options, e->options);
-    sprintf(buffer, "%s:%d:%s:%s:%u", ip, e->port_numbers[PORT_INDEX],
+    sprintf(buffer, "%s:%d:%s:%s:%u [%s]", ip, e->port_numbers[PORT_INDEX],
             hostname,
             options,
-            e->status);
+            e->status, trash ? " TRASH" : "");
     assert(e->status == EMPTY || e->status == INITIALIZED);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
     if (e->status == EMPTY)
@@ -264,7 +272,7 @@ void print_endpoint(FILE* stream, const char* name, struct endpoint* e, const si
     {
         assert(STR_IS_VALUE(e->ip) == 1 || STR_IS_PHI(e->ip) == 1);
         assert(e->port_numbers[PORT_INDEX] != 0);
-        assert(STR_IS_VALUE(e->hostname) == 1 /*|| STR_IS_PHI(e->hostname) == 1*/);
+        //assert(STR_IS_VALUE(e->hostname) == 1 /*|| STR_IS_PHI(e->hostname) == 1*/);
         assert(STR_IS_VALUE(e->options) == 1
             || STR_IS_ZERO(e->options) == 1);
     }
@@ -507,7 +515,9 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
     assert(j->zeros1 == 0);
     assert(j->small_value1 == 0 || j->small_value1 == 3);
     assert(j->zeros3 == 0);
-    assert(j->bools[0] == 0 || j->bools[0] == 1);
+    assert(
+        j->bools[0] == 2 ||
+        j->bools[0] == 0 || j->bools[0] == 1);
     assert(j->bools[1] == 0 || j->bools[1] == 1);
     assert(j->hexs[0] == 0 || j->hexs[0] == 0x8000);
     assert(j->hexs[1] == 0
