@@ -135,6 +135,13 @@ enum STATUS
     INITIALIZED = 2
 };
 
+enum TRI_STATE
+{
+    EMPTY2 = 0,
+    ONE = 1,
+    INITIALIZED2 = 2
+};
+
 struct config
 {
     char zeros[0x84 /* 132 */ + 1];
@@ -211,7 +218,7 @@ struct endpoint_alt /* 404 */
     char options[0x104 /* 260 */];
     uint32_t value32;
     uint32_t status1; // 0 or 2
-    uint32_t status2; // 0 or 2
+    uint32_t tri_state1; // 0, 1 or 2
 };
 
 enum PORTS
@@ -295,9 +302,9 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
             options,
             e->value32,
             e->status1,
-            e->status2);
+            e->tri_state1);
     assert(e->status1== EMPTY || e->status1== INITIALIZED);
-    assert(e->status2== EMPTY || e->status2== INITIALIZED);
+    assert(e->tri_state1== EMPTY2 || e->tri_state1== INITIALIZED2 || e->tri_state1 == ONE);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
     assert(value32_valid(e->value32) == 1);
     if (e->status1 == EMPTY)
@@ -444,7 +451,7 @@ void print_service_name(FILE* stream, const char* name, struct service_name* j, 
         assert(STR_IS_VALUE(j->service_name) == 1);
     if (j->enabled == 0)
         assert(STR_IS_ZERO(j->service_name) == 1);
-    if (j->status == 0 ||j->status == 2);
+    if (j->status == 0 || j->status == 2);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, j->service_name);
 }
 
@@ -622,7 +629,7 @@ struct info
     uint32_t junk12[4];
     char laterality[60];
     char dicom_ds1[0x38C4 - 0x36C0];
-    char dicom_ds2[0x3AC0 - 0X38C4 ];
+    char dicom_ds2[0x3AC0 - 0X38C4];
 #if 0
     uint32_t junk13[9];
 #else
