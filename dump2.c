@@ -340,11 +340,8 @@ void my_print6(FILE* stream, const char* name, struct junk5* j, const size_t len
         assert(j->zeros[i] == 0);
     assert(j->values[2] == 1);
     assert(j->values[3] == 1);
-    sprintf(buffer, "%u,%u,%u", j->values[0],
-            j->values[1],
-            j->values[4]
-    );
     assert(j->values[1] == j->values[4]);
+    sprintf(buffer, "%u,%u", j->values[0], j->values[1]);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
 }
 
