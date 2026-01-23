@@ -555,26 +555,19 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
 
 struct junk13
 {
-    uint32_t zeros[2];
     uint32_t hex;
-#if 0
-    uint32_t junk13[6];
-#else
     uint32_t v1;
     float f1;
     uint32_t v2;
     float f2;
     uint32_t v3;
     float f3;
-#endif
 };
 
 void print_junk13(FILE* stream, const char* name, struct junk13* j, const size_t len, const size_t offset)
 {
     assert(sizeof(struct junk13) == len);
     const size_t alignment = offset % 4u;
-    assert(j->zeros[0] == 0);
-    assert(j->zeros[1] == 0);
     assert(j->hex == 0x0
         || j->hex == 0x100
         || j->hex == 0x101
@@ -640,7 +633,7 @@ struct info
     uint32_t junk12[4];
     char laterality[60];
     char dicom_ds1[0x38C4 - 0x36C0];
-    char dicom_ds2[0x3AC0 - 0X38C4];
+    char dicom_ds2[0x3AC0 - 0X38C4 + 8];
     struct junk13 junk13;
     char gender[0x3B2C - 0x3AE4];
     char padding[0x3CC4 - 0x3B2C];
