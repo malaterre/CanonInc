@@ -149,7 +149,12 @@ struct config
     char options[0x102 /* 258 */ + 1];
     uint32_t status; // O or 2
 };
-
+struct opt
+{
+    char zeros[0x218 - 0x194];
+    char options[0x320 - 0x218 - 4]; // PHI always ? 
+    uint32_t status; // O or 2
+};
 size_t make_str(char* out, const size_t out_len, const char* in, const size_t in_len)
 {
     assert(out_len > 0);
@@ -201,6 +206,23 @@ void print_config(FILE* stream, const char* name, struct config* m, const size_t
             options,
             m->status);
     assert(m->status == EMPTY || m->status == INITIALIZED);
+    fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
+}
+
+
+void print_opt(FILE* stream, const char* name, struct opt* o, const size_t len, const size_t offset)
+{
+    assert(sizeof(struct opt) == len);
+    const size_t alignment = offset % 4u;
+    char options[512];
+    MAKE_STR(options, o->options);
+    char buffer[512 * 4];
+    assert(len < sizeof(buffer));
+    assert(is_buffer_all_zero(o->zeros, sizeof(o->zeros)) == 1);
+    sprintf(buffer, "%.*s:%s:%u", (int)sizeof(o->zeros), o->zeros,
+            options,
+            o->status);
+    assert(o->status == EMPTY || o->status == INITIALIZED);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
 }
 
@@ -587,8 +609,8 @@ struct info
 {
     uint32_t magic[2];
     struct config config;
-    char zeros1[0x218 - 0x194];
-    char opt[0x320 - 0x218]; // PHI always ?
+    struct opt opt;
+
     /* start endpoint */
     struct endpoint endpoint1;
     /* end endpoint */
@@ -685,6 +707,8 @@ struct info
 
 #define PRINT_CONFIG(stream, struct_ptr, member) \
   print_config((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+#define PRINT_OPT(stream, struct_ptr, member) \
+print_opt((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
 #define MY_PRINT6(stream, struct_ptr, member) \
   my_print6((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
@@ -727,10 +751,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     assert(pinfo->magic[0] == MAGIC_VALUE0);
     assert(pinfo->magic[1] == MAGIC_VALUE1);
     PRINT_CONFIG(stream, pinfo, config);
-    int ret = is_buffer_all_zero(pinfo->zeros1, sizeof(pinfo->zeros1));
-    assert(ret==1);
-    MY_PRINT(stream, pinfo, zeros1);
-    MY_PRINT(stream, pinfo, opt);
+    PRINT_OPT(stream, pinfo, opt);
     PRINT_ENDPOINT(stream, pinfo, endpoint1);
     PRINT_ENDPOINT(stream, pinfo, endpoint2);
     MY_PRINT6(stream, pinfo, junk5);
