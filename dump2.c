@@ -535,9 +535,12 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
         j->bools[0] == 0 || j->bools[0] == 1);
     assert(j->bools[1] == 0 || j->bools[1] == 1
         || j->bools[1] == 2);
-    assert(j->hexs[0] == 0 || j->hexs[0] == 0x8000);
+    assert(j->hexs[0] == 0 || j->hexs[0] == 0x8000
+        || j->hexs[0] == 0x7410fc
+    );
     assert(j->hexs[1] == 0
         || j->hexs[1] == 0x8000
+        || j->hexs[1] == 0x8067
         || j->hexs[1] == 0x40008000
         || j->hexs[1] == 0x40078000
         || j->hexs[1] == 0x4e008000
