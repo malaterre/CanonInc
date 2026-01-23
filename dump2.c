@@ -138,9 +138,17 @@ enum STATUS
 
 enum TRI_STATE
 {
-    EMPTY2 = 0,
-    ONE = 1,
-    INITIALIZED2 = 2
+    TRI_STATE_ZERO = 0,
+    TRI_STATE_ONE = 1,
+    TRI_STATE_TWO = 2
+};
+
+enum FOUR_STATE
+{
+    FOUR_STATE_ZERO = 0,
+    FOUR_STATE_ONE = 1,
+    // FOUR_STATE_TWO = 2,
+    FOUR_STATE_THREE = 3
 };
 
 size_t make_str(char* out, const size_t out_len, const char* in, const size_t in_len)
@@ -185,7 +193,7 @@ struct config
 {
     char zeros[0x84 /* 132 */ + 1];
     char options[0x102 /* 258 */ + 1];
-    uint32_t status; // O or 2
+    uint32_t status; /* O or 2 */
 };
 
 void print_config(FILE* stream, const char* name, struct config* m, const size_t len, const size_t offset)
@@ -198,10 +206,10 @@ void print_config(FILE* stream, const char* name, struct config* m, const size_t
     assert(len < sizeof(buffer));
     assert(is_buffer_all_zero(m->zeros, sizeof(m->zeros)) == 1);
     assert(m->status == STATUS_EMPTY || m->status == STATUS_INITIALIZED);
-    if (m->status != 0)
-        assert(STR_IS_VALUE(m->options) == 1);
     if (m->status == 0)
         assert(STR_IS_ZERO(m->options) == 1);
+    else
+        assert(STR_IS_VALUE(m->options) == 1);
     sprintf(buffer, "%.*s:%s:%u", (int)sizeof(m->zeros), m->zeros,
             options,
             m->status);
@@ -214,7 +222,7 @@ struct endpoint /* 396 */
     uint16_t port_numbers[2];
     char hostname[0x40 /* 64 */ + 1];
     char options[0x102 /* 258 */ + 1];
-    uint32_t status; // 0 or 2
+    uint32_t status; /* 0 or 2 */
 };
 
 struct endpoint_alt /* 404 */
@@ -223,8 +231,8 @@ struct endpoint_alt /* 404 */
     char hostname[0x44 /* 68 */];
     char options[0x104 /* 260 */];
     uint32_t value32;
-    uint32_t status1; // 0 or 2
-    uint32_t tri_state1; // 0, 1 or 2
+    uint32_t status; /* 0 or 2 */
+    uint32_t tri_state; /* 0, 1 or 2 */
 };
 
 enum PORTS
@@ -318,13 +326,13 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
             hostname,
             options,
             e->value32,
-            e->status1,
-            e->tri_state1);
-    assert(e->status1== STATUS_EMPTY || e->status1== STATUS_INITIALIZED);
-    assert(e->tri_state1== EMPTY2 || e->tri_state1== INITIALIZED2 || e->tri_state1 == ONE);
+            e->status,
+            e->tri_state);
+    assert(e->status == STATUS_EMPTY || e->status == STATUS_INITIALIZED);
+    assert(e->tri_state == TRI_STATE_ZERO || e->tri_state == TRI_STATE_TWO || e->tri_state == TRI_STATE_ONE);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
     assert(value32_valid(e->value32) == 1);
-    if (e->status1 == STATUS_EMPTY)
+    if (e->status == STATUS_EMPTY)
     {
         assert(STR_IS_ZERO(e->ip) == 1);
         assert(STR_IS_ZERO(e->hostname) == 1);
@@ -457,22 +465,22 @@ void print_hardware(FILE* stream, const char* name, struct hardware* h, const si
 struct service_name
 {
     char service_name[0x35B8 - 0x3570 - 4];
-    uint32_t status; // 0 or 2
-    uint32_t enabled; // 0, 1 or 3
+    uint32_t status; /* 0 or 2 */
+    uint32_t four_state; /* 0, 1 or 3 */
 };
 
 void print_service_name(FILE* stream, const char* name, struct service_name* j, const size_t len, const size_t offset)
 {
     assert(sizeof(struct service_name) == len);
     const size_t alignment = offset % 4u;
-    if (j->enabled != 0)
+    if (j->four_state != 0)
         assert(STR_IS_VALUE(j->service_name) == 1);
-    if (j->enabled == 0)
+    if (j->four_state == 0)
         assert(STR_IS_ZERO(j->service_name) == 1);
     assert(j->status == STATUS_EMPTY || j->status == STATUS_INITIALIZED);
-    assert(j->enabled == 0 || j->enabled == 1 || j->enabled == 3);
+    assert(j->four_state == FOUR_STATE_ZERO || j->four_state == FOUR_STATE_ONE || j->four_state == FOUR_STATE_THREE);
     fprintf(stream, "%04zx %zu %s %zu: [%s:%u:%u]\n", offset, alignment, name, len, j->service_name, j->status,
-            j->enabled);
+            j->four_state);
 }
 
 struct junk11
@@ -480,11 +488,11 @@ struct junk11
     uint32_t u32;
     uint32_t hexs[2];
     uint32_t zeros1;
-    uint32_t bools[2]; // 0, 1 or 2
+    uint32_t tri_states[2]; /* 0, 1 or 2 */
     uint32_t u[2];
-    uint32_t small_value1;
+    uint32_t small_value1; // four states with only 0 & 3 ?
     uint32_t v;
-    uint32_t zeros3;
+    uint32_t zeros2;
     uint32_t w;
 };
 
@@ -494,7 +502,7 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
     const size_t alignment = offset % 4u;
     fprintf(stream, "%04zx %zu %s %zu: [%08u:%x:%x:%u:%u:%x:%x:%u:%u]\n", offset, alignment, name, len, j->u32,
             j->hexs[0], j->hexs[1],
-            j->bools[0], j->bools[1],
+            j->tri_states[0], j->tri_states[1],
             j->u[0], j->u[1],
             j->v, j->w
     );
@@ -533,12 +541,13 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
     );
     assert(j->zeros1 == 0);
     assert(j->small_value1 == 0 || j->small_value1 == 3);
-    assert(j->zeros3 == 0);
-    assert(
-        j->bools[0] == 2 ||
-        j->bools[0] == 0 || j->bools[0] == 1);
-    assert(j->bools[1] == 0 || j->bools[1] == 1
-        || j->bools[1] == 2);
+    assert(j->zeros2 == 0);
+    for (int i = 0; i < 2; ++i)
+    {
+        assert(j->tri_states[i] == TRI_STATE_ZERO
+            || j->tri_states[i] == TRI_STATE_ONE
+            || j->tri_states[i] == TRI_STATE_TWO);
+    }
     assert(j->hexs[0] == 0 || j->hexs[0] == 0x8000
         || j->hexs[0] == 0x7410fc
         || j->hexs[0] == 0x7e10fc
@@ -734,14 +743,6 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, format5);
     MY_PRINT(stream, pinfo, format6);
     MY_PRINT(stream, pinfo, fixme1);
-    if (0)
-    {
-        char buffer[512];
-        sprintf(buffer, "%s.fixme", fn);
-        FILE* ffixme = fopen(buffer, "wb");
-        fwrite(pinfo->fixme1, 1, sizeof(pinfo->fixme1), ffixme);
-        fclose(ffixme);
-    }
     PRINT_HARDWARE(stream, pinfo, hardware);
     MY_PRINT2(stream, pinfo, small_number);
     MY_PRINT(stream, pinfo, study_desc);
@@ -752,20 +753,13 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT2(stream, pinfo, junk9);
     PRINT_ENDPOINT_ALT(stream, pinfo, endpoint_alt2);
     MY_PRINT2(stream, pinfo, junk10);
-    //ret = is_buffer_all_zero(pinfo->zeros2, sizeof(pinfo->zeros2));
-    //assert(ret==1);
     MY_PRINT(stream, pinfo, datetime1);
     MY_PRINT(stream, pinfo, datetime2);
     MY_PRINT(stream, pinfo, service_name1);
     MY_PRINT(stream, pinfo, aetitle1);
     MY_PRINT(stream, pinfo, aetitle2);
     MY_PRINT(stream, pinfo, aetitle3);
-#if 0
-    MY_PRINT(stream, pinfo, service_name3);
-    MY_PRINT2(stream, pinfo, service_name3_status);
-#else
     PRINT_SERVICE_NAME(stream, pinfo, service_name2);
-#endif
     PRINT_JUNK11(stream, pinfo, junk11);
     MY_PRINT(stream, pinfo, orientation1);
     MY_PRINT(stream, pinfo, orientation2);
