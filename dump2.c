@@ -588,7 +588,7 @@ struct info
     uint32_t magic[2];
     struct config config;
     char zeros1[0x218 - 0x194];
-    char opt[0x320 - 0x218];
+    char opt[0x320 - 0x218]; // PHI always ?
     /* start endpoint */
     struct endpoint endpoint1;
     /* end endpoint */
@@ -729,8 +729,8 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     PRINT_CONFIG(stream, pinfo, config);
     int ret = is_buffer_all_zero(pinfo->zeros1, sizeof(pinfo->zeros1));
     assert(ret==1);
-    MY_PRINT(stream, pinfo, opt);
     MY_PRINT(stream, pinfo, zeros1);
+    MY_PRINT(stream, pinfo, opt);
     PRINT_ENDPOINT(stream, pinfo, endpoint1);
     PRINT_ENDPOINT(stream, pinfo, endpoint2);
     MY_PRINT6(stream, pinfo, junk5);
