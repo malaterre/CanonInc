@@ -555,7 +555,12 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
 
 struct junk13
 {
-    uint32_t hex;
+    union
+    {
+        uint32_t hex;
+        uint8_t hexs[4];
+    };
+
     uint32_t v1;
     float f1;
     uint32_t v2;
@@ -564,17 +569,14 @@ struct junk13
     float f3;
 };
 
-void print_junk13(FILE* stream, const char* name, struct junk13* j, const size_t len, const size_t offset)
+void print_junk13(FILE* stream, const char* name, const struct junk13* j, const size_t len, const size_t offset)
 {
     assert(sizeof(struct junk13) == len);
     const size_t alignment = offset % 4u;
-    assert(j->hex == 0x0
-        || j->hex == 0x100
-        || j->hex == 0x101
-        || j->hex == 0x00010001
-        || j->hex == 0x01000100
-        || j->hex == 0x01010101
-    );
+    for (int i = 0; i < 4; ++i)
+    {
+        assert(j->hexs[i] == 0x0 || j->hexs[i] == 0x1);
+    }
     fprintf(stream, "%04zx %zu %s %zu: [%08x:%u:%g:%u:%g:%u:%g]\n", offset, alignment, name, len, j->hex,
             j->v1, j->f1,
             j->v2, j->f2,
