@@ -284,6 +284,7 @@ int value32_valid(const uint32_t value32)
         || value32 == 0x1
         || value32 == 0x100
         || value32 == 0x200
+        || value32 == 0x300
         || value32 == 0x10000
         || value32 == 0x10001
         || value32 == 0x1000000
