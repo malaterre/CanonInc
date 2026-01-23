@@ -132,8 +132,8 @@ void my_print3(FILE* stream, const char* name, const float* d, const size_t len,
 
 enum STATUS
 {
-    EMPTY = 0,
-    INITIALIZED = 2
+    STATUS_EMPTY = 0,
+    STATUS_INITIALIZED = 2
 };
 
 enum TRI_STATE
@@ -141,13 +141,6 @@ enum TRI_STATE
     EMPTY2 = 0,
     ONE = 1,
     INITIALIZED2 = 2
-};
-
-struct config
-{
-    char zeros[0x84 /* 132 */ + 1];
-    char options[0x102 /* 258 */ + 1];
-    uint32_t status; // O or 2
 };
 
 size_t make_str(char* out, const size_t out_len, const char* in, const size_t in_len)
@@ -188,6 +181,13 @@ size_t make_str(char* out, const size_t out_len, const char* in, const size_t in
 #define MAKE_STR(out, in) \
 make_str(out, sizeof(out), (in), sizeof(in))
 
+struct config
+{
+    char zeros[0x84 /* 132 */ + 1];
+    char options[0x102 /* 258 */ + 1];
+    uint32_t status; // O or 2
+};
+
 void print_config(FILE* stream, const char* name, struct config* m, const size_t len, const size_t offset)
 {
     assert(sizeof(struct config) == len);
@@ -197,10 +197,14 @@ void print_config(FILE* stream, const char* name, struct config* m, const size_t
     char buffer[512 * 4];
     assert(len < sizeof(buffer));
     assert(is_buffer_all_zero(m->zeros, sizeof(m->zeros)) == 1);
+    assert(m->status == STATUS_EMPTY || m->status == STATUS_INITIALIZED);
+    if (m->status != 0)
+        assert(STR_IS_VALUE(m->options) == 1);
+    if (m->status == 0)
+        assert(STR_IS_ZERO(m->options) == 1);
     sprintf(buffer, "%.*s:%s:%u", (int)sizeof(m->zeros), m->zeros,
             options,
             m->status);
-    assert(m->status == EMPTY || m->status == INITIALIZED);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
 }
 
@@ -259,9 +263,9 @@ void print_endpoint(FILE* stream, const char* name, struct endpoint* e, const si
             hostname,
             options,
             e->status, trash ? " TRASH" : "");
-    assert(e->status == EMPTY || e->status == INITIALIZED);
+    assert(e->status == STATUS_EMPTY || e->status == STATUS_INITIALIZED);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
-    if (e->status == EMPTY)
+    if (e->status == STATUS_EMPTY)
     {
         assert(STR_IS_ZERO(e->ip) == 1);
         assert(e->port_numbers[PORT_INDEX] == 0);
@@ -316,11 +320,11 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
             e->value32,
             e->status1,
             e->tri_state1);
-    assert(e->status1== EMPTY || e->status1== INITIALIZED);
+    assert(e->status1== STATUS_EMPTY || e->status1== STATUS_INITIALIZED);
     assert(e->tri_state1== EMPTY2 || e->tri_state1== INITIALIZED2 || e->tri_state1 == ONE);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
     assert(value32_valid(e->value32) == 1);
-    if (e->status1 == EMPTY)
+    if (e->status1 == STATUS_EMPTY)
     {
         assert(STR_IS_ZERO(e->ip) == 1);
         assert(STR_IS_ZERO(e->hostname) == 1);
@@ -461,9 +465,10 @@ void print_service_name(FILE* stream, const char* name, struct service_name* j, 
         assert(STR_IS_VALUE(j->service_name) == 1);
     if (j->enabled == 0)
         assert(STR_IS_ZERO(j->service_name) == 1);
+    assert(j->status == STATUS_EMPTY || j->status == STATUS_INITIALIZED);
     assert(j->enabled == 0 || j->enabled == 1 || j->enabled == 3);
-    assert(j->status == EMPTY || j->status == INITIALIZED);
-    fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, j->service_name);
+    fprintf(stream, "%04zx %zu %s %zu: [%s:%u:%u]\n", offset, alignment, name, len, j->service_name, j->status,
+            j->enabled);
 }
 
 struct junk11
