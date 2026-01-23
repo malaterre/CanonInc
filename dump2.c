@@ -282,6 +282,7 @@ int value32_valid(const uint32_t value32)
 {
     if (value32 == 0x0
         || value32 == 0x1
+        || value32 == 0x100
         || value32 == 0x10000
         || value32 == 0x10001
         || value32 == 0x1000000
@@ -445,18 +446,18 @@ struct service_name
 {
     char service_name[0x35B8 - 0x3570 - 4];
     uint32_t status;
-    uint32_t enabled;
+    uint32_t enabled; // 0, 1 or 3
 };
 
 void print_service_name(FILE* stream, const char* name, struct service_name* j, const size_t len, const size_t offset)
 {
     assert(sizeof(struct service_name) == len);
     const size_t alignment = offset % 4u;
-    if (j->enabled == 1)
+    if (j->enabled != 0)
         assert(STR_IS_VALUE(j->service_name) == 1);
     if (j->enabled == 0)
         assert(STR_IS_ZERO(j->service_name) == 1);
-    assert(j->enabled == 0 || j->enabled == 1);
+    assert(j->enabled == 0 || j->enabled == 1 || j->enabled == 3);
     assert(j->status == EMPTY || j->status == INITIALIZED);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, j->service_name);
 }
