@@ -415,6 +415,8 @@ struct tmp
 
 struct hardware
 {
+    uint16_t junk0;
+
     union
     {
         char hardware_id[0x2df0 - 0x2bea - 4];
@@ -426,27 +428,29 @@ struct hardware
 void print_hardware(FILE* stream, const char* name, struct hardware* h, const size_t len, const size_t offset)
 {
     assert(sizeof(struct hardware) == len);
+    assert(h->junk0 == 0);
     uint32_t magic;
-    memcpy(&magic, h, sizeof(magic));
+    memcpy(&magic, h->hardware_id, sizeof(magic));
     // '0x4d574d' 5068621
     if (magic == 0x4d574d) // ASCII 'MWM'
     {
         const size_t ll = sizeof(struct tmp);
-        assert(ll == len);
+        assert(ll == len - 2);
         const size_t alignment = offset % 4u;
         struct tmp* tmp = &h->tmp;
+        assert(tmp->junk1 == 0x574D);
+        assert(tmp->junk2 == 0x4D);
         assert(STR_IS_VALUE(tmp->uid));
         assert(STR_IS_VALUE(tmp->str1));
         assert(STR_IS_VALUE(tmp->str2));
         assert(tmp->value2==0);
-        fprintf(stream, "%04zx %zu %s %zu: [%u: %s:%s:%s]\n", offset, alignment, name, len, tmp->value1,
-                tmp->uid, tmp->str1, tmp->str2
-        );
+        fprintf(stream, "%04zx %zu %s %zu: [%u: %s:%s:%s]\n", offset, alignment, name, len, tmp->value1, tmp->uid,
+                tmp->str1, tmp->str2);
     }
     else
     {
         const char* str = h->hardware_id;
-        my_print(stream, name, str, len, offset);
+        my_print(stream, name, str, len - 2, offset);
     }
 }
 
@@ -610,7 +614,7 @@ struct info
     char format5[0x26A1 - 0x22a0];
     char format6[0x2aaa - 0x26A1 - 8];
     // not aligned:
-    char fixme1[0x2BEA - 0x2aaa + 8];
+    char fixme1[0x2BEA - 0x2aaa + 8 - 2];
     struct hardware hardware;
     uint32_t small_number[1];
     char study_desc[0x2ff0 - 0x2df0];
