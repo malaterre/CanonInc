@@ -453,7 +453,7 @@ void print_hardware(FILE* stream, const char* name, struct hardware* h, const si
 struct service_name
 {
     char service_name[0x35B8 - 0x3570 - 4];
-    uint32_t status;
+    uint32_t status; // 0 or 2
     uint32_t enabled; // 0, 1 or 3
 };
 
@@ -624,11 +624,11 @@ struct info
     uint32_t junk10[11];
     char datetime1[68];
     char datetime2[136 - 68];
-    char service_name2[0x34A4 - 0x3458];
+    char service_name1[0x34A4 - 0x3458];
     char aetitle1[0x34E8 - 0x34A4];
-    char aetitle3[0x352C - 0x34E8];
-    char app_name[0x3570 - 0x352C];
-    struct service_name service_name;
+    char aetitle2[0x352C - 0x34E8];
+    char aetitle3[0x3570 - 0x352C];
+    struct service_name service_name2;
     struct junk11 junk11;
     char orientation1[0x3630 - 0x35EC];
     char orientation2[0x3674 - 0x3630];
@@ -746,15 +746,15 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     //assert(ret==1);
     MY_PRINT(stream, pinfo, datetime1);
     MY_PRINT(stream, pinfo, datetime2);
-    MY_PRINT(stream, pinfo, service_name2);
+    MY_PRINT(stream, pinfo, service_name1);
     MY_PRINT(stream, pinfo, aetitle1);
+    MY_PRINT(stream, pinfo, aetitle2);
     MY_PRINT(stream, pinfo, aetitle3);
-    MY_PRINT(stream, pinfo, app_name);
 #if 0
     MY_PRINT(stream, pinfo, service_name3);
     MY_PRINT2(stream, pinfo, service_name3_status);
 #else
-    PRINT_SERVICE_NAME(stream, pinfo, service_name);
+    PRINT_SERVICE_NAME(stream, pinfo, service_name2);
 #endif
     PRINT_JUNK11(stream, pinfo, junk11);
     MY_PRINT(stream, pinfo, orientation1);
