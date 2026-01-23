@@ -336,7 +336,7 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
     }
 }
 
-struct junk5
+struct junk5 /* 88 */
 {
     uint32_t zeros[17];
     uint32_t values[5]; // patient_id/study_id followed by series_number x 2 ?
