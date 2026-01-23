@@ -86,7 +86,8 @@ struct info_common
     char config[0x8D - 0x00 - 8];
     char flags1[0x190 - 0x8D];
     uint32_t two_states1[1]; // O or 2
-    char zeros1[0x320 - 0x194];
+    char zeros1[0x218 - 0x194 + 1];
+    char opt[0x320 - 0x218 - 1]; // PHI always ?
     /* start endpoint */
     char ip4_0[0x40 /* 64 */];
     uint32_t port_number1[1];
@@ -224,6 +225,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size)
     int ret = is_buffer_all_zero(pinfo->zeros1, sizeof(pinfo->zeros1));
     assert(ret==1);
     MY_PRINT(stream, pinfo, zeros1);
+    MY_PRINT(stream, pinfo, opt);
     MY_PRINT(stream, pinfo, ip4_0);
     MY_PRINT2(stream, pinfo, port_number1);
     MY_PRINT(stream, pinfo, hostname1);
