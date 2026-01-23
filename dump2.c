@@ -325,7 +325,7 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
     }
     else
     {
-        assert(/*STR_IS_VALUE(e->ip) == 1 ||*/ STR_IS_PHI(e->ip) == 1);
+        assert(STR_IS_VALUE(e->ip) == 1 || STR_IS_PHI(e->ip) == 1);
         //assert(e->port_number != 0);
         assert(STR_IS_VALUE(e->hostname) == 1 /*|| STR_IS_PHI(e->hostname) == 1*/);
         // assert(STR_IS_VALUE(e->options) == 1|| STR_IS_PHI(e->options) == 1 || STR_IS_ZERO(e->options) == 1);
@@ -578,7 +578,8 @@ struct info
 {
     uint32_t magic[2];
     struct config config;
-    char zeros1[0x320 - 0x194];
+    char zeros1[0x218 - 0x194];
+    char opt[0x320 - 0x218];
     /* start endpoint */
     struct endpoint endpoint1;
     /* end endpoint */
@@ -719,6 +720,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     PRINT_CONFIG(stream, pinfo, config);
     int ret = is_buffer_all_zero(pinfo->zeros1, sizeof(pinfo->zeros1));
     assert(ret==1);
+    MY_PRINT(stream, pinfo, opt);
     MY_PRINT(stream, pinfo, zeros1);
     PRINT_ENDPOINT(stream, pinfo, endpoint1);
     PRINT_ENDPOINT(stream, pinfo, endpoint2);
