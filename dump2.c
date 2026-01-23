@@ -529,7 +529,7 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
         j->bools[0] == 2 ||
         j->bools[0] == 0 || j->bools[0] == 1);
     assert(j->bools[1] == 0 || j->bools[1] == 1
-     || j->bools[1] == 2);
+        || j->bools[1] == 2);
     assert(j->hexs[0] == 0 || j->hexs[0] == 0x8000);
     assert(j->hexs[1] == 0
         || j->hexs[1] == 0x8000
@@ -588,12 +588,8 @@ struct info
     uint32_t magic[2];
     struct config config1;
     struct config config2;
-    /* start endpoint */
     struct endpoint endpoint1;
-    /* end endpoint */
-    /* start endpoint */
     struct endpoint endpoint2;
-    /* end endpoint */
     struct junk5 junk5;
     struct str3_1 str3_1;
     char am[0x0c96 - 0x0a94];
@@ -612,11 +608,7 @@ struct info
     char format6[0x2aaa - 0x26A1 - 8];
     // not aligned:
     char fixme1[0x2BEA - 0x2aaa + 8];
-#if 0
-    char hardware_id[0x2df0 - 0x2bea - 4];
-#else
     struct hardware hardware;
-#endif
     uint32_t small_number[1];
     char study_desc[0x2ff0 - 0x2df0];
     uint32_t junk7[1];
@@ -636,28 +628,15 @@ struct info
     char aetitle1[0x34E8 - 0x34A4];
     char aetitle3[0x352C - 0x34E8];
     char app_name[0x3570 - 0x352C];
-#if 0
-    char service_name3[0x35B8 - 0x3570];
-    uint32_t service_name3_status[1];
-#else
     struct service_name service_name;
-#endif
-#if 0
-    uint32_t junk11[12];
-#else
     struct junk11 junk11;
-#endif
     char orientation1[0x3630 - 0x35EC];
     char orientation2[0x3674 - 0x3630];
     uint32_t junk12[4];
     char laterality[60];
     char dicom_ds1[0x38C4 - 0x36C0];
     char dicom_ds2[0x3AC0 - 0X38C4];
-#if 0
-    uint32_t junk13[9];
-#else
     struct junk13 junk13;
-#endif
     char gender[0x3B2C - 0x3AE4];
     char padding[0x3CC4 - 0x3B2C];
     char mode1[0x3DC8 - 0x3CC4];
