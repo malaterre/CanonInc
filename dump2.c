@@ -532,6 +532,7 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
         || j->u[1] == 0x1
         || j->u[1] == 0x100
         || j->u[1] == 0x101
+        || j->u[1] == 0x10000
         || j->u[1] == 0x10101
         || j->u[1] == 0x20100
         || j->u[1] == 0x30101
