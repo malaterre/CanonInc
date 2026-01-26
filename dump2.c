@@ -394,7 +394,7 @@ void my_print7(FILE* stream, const char* name, struct str3_1* s, const size_t le
     char buffer[512 * 4];
     assert(len < sizeof(buffer));
     assert(STR_IS_VALUE(s->caltype));
-    assert(STR_IS_VALUE(s->cdc));
+    assert(STR_IS_VALUE(s->cdc)|| STR_IS_ZERO(s->cdc));
     const size_t cc_len1 = strlen(s->cc);
     const char* cc2 = s->cc + cc_len1 + 1;
     const size_t cc_len2 = strlen(cc2);
@@ -406,7 +406,7 @@ void my_print7(FILE* stream, const char* name, struct str3_1* s, const size_t le
     }
     else
     {
-        assert(STR_IS_VALUE(s->cc));
+        assert(STR_IS_VALUE(s->cc)||STR_IS_ZERO(s->cc));
     }
     fprintf(stream, "%04zx %zu %s %zu: [\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t]\n", offset, alignment, name,
             len,
