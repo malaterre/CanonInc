@@ -694,7 +694,8 @@ struct info
     struct junk13 junk13;
     char gender[0x3B2C - 0x3AE4];
     char padding[0x3B70 - 0x3B2C];
-    char weight1[0x3CC4 - 0x3B70];
+    char weight1[0x3BB4 - 0x3B70];
+    char lat1[0x3CC4 - 0x3BB4];
     char mode1[0x3DC8 - 0x3CC4];
     char mode2[0x3ECC - 0x3DC8];
     char mode3[0x3FD0 - 0x3ECC];
@@ -823,6 +824,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     {
         MY_PRINT(stream, pinfo, padding);
         MY_PRINT(stream, pinfo, weight1);
+        MY_PRINT(stream, pinfo, lat1);
         MY_PRINT(stream, pinfo, mode1);
         MY_PRINT(stream, pinfo, mode2);
         MY_PRINT(stream, pinfo, mode3);
