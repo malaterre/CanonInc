@@ -680,7 +680,10 @@ struct info
     char padding[0x3CC4 - 0x3B2C];
     char mode1[0x3DC8 - 0x3CC4];
     char mode2[0x3ECC - 0x3DC8];
-    char mode3[0x42DC - 0x3ECC];
+    char mode3[0x3FD0 - 0x3ECC];
+    char mode4[0x40D4 - 0x3FD0];
+    char mode5[0x41D8 - 0x40D4];
+    char mode6[0x42DC - 0x41D8];
     char left_right[0x43E0 - 0x42DC];
     char site_name1[0x44E4 - 0x43E0];
     char site_name2[0x45E8 - 0x44E4];
@@ -801,6 +804,9 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
         MY_PRINT(stream, pinfo, mode1);
         MY_PRINT(stream, pinfo, mode2);
         MY_PRINT(stream, pinfo, mode3);
+        MY_PRINT(stream, pinfo, mode4);
+        MY_PRINT(stream, pinfo, mode5);
+        MY_PRINT(stream, pinfo, mode6);
         MY_PRINT(stream, pinfo, left_right);
         MY_PRINT(stream, pinfo, site_name1);
         MY_PRINT(stream, pinfo, site_name2);
