@@ -672,8 +672,8 @@ struct info
     struct junk11 junk11;
     char orientation1[0x3630 - 0x35EC];
     char orientation2[0x3674 - 0x3630];
-    uint32_t junk12[4];
-    char laterality[60];
+    uint32_t junk12[2];
+    char study_id[60 + 4*2];
     char dicom_ds1[0x38C4 - 0x36C0];
     char dicom_ds2[0x3AC0 - 0X38C4 + 8];
     struct junk13 junk13;
@@ -795,7 +795,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, orientation1);
     MY_PRINT(stream, pinfo, orientation2);
     MY_PRINT2(stream, pinfo, junk12);
-    MY_PRINT(stream, pinfo, laterality);
+    MY_PRINT(stream, pinfo, study_id);
     MY_PRINT(stream, pinfo, dicom_ds1);
     MY_PRINT(stream, pinfo, dicom_ds2);
     //MY_PRINT2(stream, pinfo, junk13);
