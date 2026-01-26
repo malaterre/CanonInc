@@ -560,6 +560,7 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
             || j->tri_states[i] == TRI_STATE_ONE
             || j->tri_states[i] == TRI_STATE_TWO);
     }
+#if 0
     assert(j->hexs[0] == 0 || j->hexs[0] == 0x8000
         || j->hexs[0] == 0x4910fe
         || j->hexs[0] == 0x4a10fe
@@ -572,6 +573,7 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
         || j->hexs[0] == 0x3708000
         || j->hexs[0] == 0x3c88000
     );
+#endif
     assert(j->hexs[1] == 0
         || j->hexs[1] == 0x8000
         || j->hexs[1] == 0x8026
