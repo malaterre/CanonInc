@@ -346,7 +346,7 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
     }
     else
     {
-        assert(STR_IS_VALUE(e->ip) == 1 || STR_IS_PHI(e->ip) == 1);
+        assert(STR_IS_VALUE(e->ip) == 1 || STR_IS_PHI(e->ip) == 1 || STR_IS_ZERO(e->ip) == 1);
         //assert(e->port_number != 0);
         assert(STR_IS_VALUE(e->hostname) == 1 /*|| STR_IS_PHI(e->hostname) == 1*/);
         // assert(STR_IS_VALUE(e->options) == 1|| STR_IS_PHI(e->options) == 1 || STR_IS_ZERO(e->options) == 1);
