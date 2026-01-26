@@ -646,7 +646,8 @@ struct info
     char format5[0x26A1 - 0x22a0];
     char format6[0x2aaa - 0x26A1 - 8];
     // not aligned:
-    char fixme1[0x2BEA - 0x2aaa + 8 - 2];
+    uint16_t junk6[1];
+    char fixme1[0x2BEA - 0x2aaa + 8 - 2 - 2 ];
     struct hardware hardware;
     uint32_t small_number[1];
     char study_desc[0x2ff0 - 0x2df0];
@@ -769,6 +770,8 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, format4);
     MY_PRINT(stream, pinfo, format5);
     MY_PRINT(stream, pinfo, format6);
+    assert( pinfo-> junk6 [0]== 0);
+    //MY_PRINT2(stream, pinfo, junk6);
     MY_PRINT(stream, pinfo, fixme1);
     PRINT_HARDWARE(stream, pinfo, hardware);
     MY_PRINT2(stream, pinfo, small_number);
