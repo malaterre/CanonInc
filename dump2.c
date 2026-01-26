@@ -563,6 +563,7 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
         || j->hexs[0] == 0x4a10fe
         || j->hexs[0] == 0x4b10fe
         || j->hexs[0] == 0x4c10fe
+        || j->hexs[0] == 0x4d10fe
         || j->hexs[0] == 0x7410fc
         || j->hexs[0] == 0x7e10fc
         || j->hexs[0] == 0x8810fc
