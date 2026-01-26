@@ -222,7 +222,7 @@ struct endpoint /* 396 */
     uint16_t port_numbers[2];
     char hostname[0x40 /* 64 */ + 1];
     char options[0x102 /* 258 */ + 1];
-    uint32_t status; /* 0 or 2 */
+    uint32_t tri_state; /* 0, 1 or 2 */
 };
 
 struct endpoint_alt /* 404 */
@@ -270,10 +270,11 @@ void print_endpoint(FILE* stream, const char* name, struct endpoint* e, const si
     sprintf(buffer, "%s:%d:%s:%s:%u [%s]", ip, e->port_numbers[PORT_INDEX],
             hostname,
             options,
-            e->status, trash ? " TRASH" : "");
-    assert(e->status == STATUS_EMPTY || e->status == STATUS_INITIALIZED);
+            e->tri_state, trash ? " TRASH" : "");
+    assert(e->tri_state == TRI_STATE_ONE || e->tri_state == TRI_STATE_TWO
+        || e->tri_state == TRI_STATE_ZERO);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
-    if (e->status == STATUS_EMPTY)
+    if (e->tri_state == TRI_STATE_ZERO)
     {
         assert(STR_IS_ZERO(e->ip) == 1);
         assert(e->port_numbers[PORT_INDEX] == 0);
