@@ -342,7 +342,7 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
     {
         assert(STR_IS_ZERO(e->ip) == 1);
         assert(STR_IS_ZERO(e->hostname) == 1|| STR_IS_PHI(e->hostname) == 1);
-        assert(STR_IS_ZERO(e->options) == 1|| STR_IS_PHI(e->options) == 1 );
+        assert(STR_IS_ZERO(e->options) == 1|| STR_IS_PHI(e->options) == 1);
     }
     else
     {
@@ -459,7 +459,7 @@ void print_hardware(FILE* stream, const char* name, struct hardware* h, const si
         assert(STR_IS_VALUE(tmp->str2)||STR_IS_ZERO(tmp->str2));
         assert(tmp->value2==0|| tmp->value2==1);
         fprintf(stream, "%04zx %zu %s %zu: [%u,%u: %s:%s:%s]\n", offset, alignment, name, len, tmp->value1,
-            tmp->value2, tmp->uid, tmp->str1, tmp->str2);
+                tmp->value2, tmp->uid, tmp->str1, tmp->str2);
     }
     else
     {
@@ -647,7 +647,9 @@ struct info
     char format6[0x2aaa - 0x26A1 - 8];
     // not aligned:
     uint16_t junk6[1];
-    char fixme1[0x2BEA - 0x2aaa + 8 - 2 - 2 ];
+    char fixme1[0x2B68 - 0x2aa4];
+    char str1[0x2BA9 - 0x2b68];
+    char str2[0x2BE8 - 0x2bA9];
     struct hardware hardware;
     uint32_t small_number[1];
     char study_desc[0x2ff0 - 0x2df0];
@@ -673,7 +675,7 @@ struct info
     char orientation1[0x3630 - 0x35EC];
     char orientation2[0x3674 - 0x3630];
     uint32_t junk12[2];
-    char study_id[60 + 4*2];
+    char study_id[60 + 4 * 2];
     char dicom_ds1[0x38C4 - 0x36C0];
     char dicom_ds2[0x3AC0 - 0X38C4 + 8];
     struct junk13 junk13;
@@ -770,9 +772,11 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, format4);
     MY_PRINT(stream, pinfo, format5);
     MY_PRINT(stream, pinfo, format6);
-    assert( pinfo-> junk6 [0]== 0);
+    assert(pinfo-> junk6 [0]== 0);
     //MY_PRINT2(stream, pinfo, junk6);
     MY_PRINT(stream, pinfo, fixme1);
+    MY_PRINT(stream, pinfo, str1);
+    MY_PRINT(stream, pinfo, str2);
     PRINT_HARDWARE(stream, pinfo, hardware);
     MY_PRINT2(stream, pinfo, small_number);
     assert(pinfo->small_number[0]!=0);
