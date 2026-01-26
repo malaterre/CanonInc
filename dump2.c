@@ -455,8 +455,8 @@ void print_hardware(FILE* stream, const char* name, struct hardware* h, const si
         assert(tmp->junk1 == 0x574D);
         assert(tmp->junk2 == 0x4D);
         assert(STR_IS_VALUE(tmp->uid));
-        assert(STR_IS_VALUE(tmp->str1));
-        assert(STR_IS_VALUE(tmp->str2));
+        assert(STR_IS_VALUE(tmp->str1)||STR_IS_ZERO(tmp->str1));
+        assert(STR_IS_VALUE(tmp->str2)||STR_IS_ZERO(tmp->str2));
         assert(tmp->value2==0);
         fprintf(stream, "%04zx %zu %s %zu: [%u: %s:%s:%s]\n", offset, alignment, name, len, tmp->value1, tmp->uid,
                 tmp->str1, tmp->str2);
