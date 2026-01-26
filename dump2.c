@@ -751,6 +751,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, fixme1);
     PRINT_HARDWARE(stream, pinfo, hardware);
     MY_PRINT2(stream, pinfo, small_number);
+    assert(pinfo->small_number[0]!=0);
     MY_PRINT(stream, pinfo, study_desc);
     MY_PRINT2(stream, pinfo, junk7);
     MY_PRINT(stream, pinfo, versions);
