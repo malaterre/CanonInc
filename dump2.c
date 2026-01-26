@@ -297,6 +297,7 @@ int value32_valid(const uint32_t value32)
         || value32 == 0x1
         || value32 == 0x100
         || value32 == 0x200
+        || value32 == 0x201
         || value32 == 0x300
         || value32 == 0x400
         || value32 == 0x500
