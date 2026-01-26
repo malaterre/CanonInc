@@ -683,7 +683,10 @@ struct info
     char mode3[0x42DC - 0x3ECC];
     char left_right[0x43E0 - 0x42DC];
     char site_name1[0x44E4 - 0x43E0];
-    char site_name2[0x48F4 - 0x44E4];
+    char site_name2[0x45E8 - 0x44E4];
+    char anon1[0x46EC - 0x45E8];
+    char anon2[0x47F0 - 0x46EC];
+    char anon3[0x48F4 - 0x47F0];
     char series_name[0x493A - 0x48F4 + 2];
 };
 
@@ -801,6 +804,9 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
         MY_PRINT(stream, pinfo, left_right);
         MY_PRINT(stream, pinfo, site_name1);
         MY_PRINT(stream, pinfo, site_name2);
+        MY_PRINT(stream, pinfo, anon1);
+        MY_PRINT(stream, pinfo, anon2);
+        MY_PRINT(stream, pinfo, anon3);
         MY_PRINT(stream, pinfo, series_name);
     }
     free(pinfo);
