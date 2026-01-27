@@ -415,38 +415,27 @@ void my_print7(FILE* stream, const char* name, struct str3_1* s, const size_t le
             strlen(s->cc), s->cc);
 }
 
-struct tmp
+struct study_info
 {
     uint16_t junk1;
     uint16_t junk2;
     //
     uint16_t value1;
     uint16_t value2;
-    char uid[0X2C33 - 0X2BF2];
-    char str1[0X2C44 - 0X2C33];
+    char study_instance_uid[0X2C33 - 0X2BF2];
+    char study_id[0X2C44 - 0X2C33];
     char str2[510 - 86];
-};
-
-struct hardware
-{
-    uint16_t junk0;
-
-    union
-    {
-        char hardware_id[0x2df0 - 0x2bea - 4];
-        struct tmp tmp;
-    };
 };
 
 struct hardware2
 {
     char dept_id[0x2BA9 - 0x2b68];
-    char dept_name[0x2BE8 - 0x2bA9 + 2];
+    char dept_name[0x2BEA - 0x2bA9];
 
     union
     {
         char hardware_id[0x2df0 - 0x2bea - 4];
-        struct tmp tmp;
+        struct study_info tmp;
     };
 };
 
@@ -457,60 +446,32 @@ void print_hardware2(FILE* stream, const char* name, struct hardware2* h, const 
     //MY_PRINT(stream, pinfo, dept_id);
     //MY_PRINT(stream, pinfo, dept_name);
     uint32_t magic;
-    memcpy(&magic, h->hardware_id, sizeof(magic));    
-    // '0x4d574d' 5068621
-    if (magic == 0x4d574d) // ASCII 'MWM'
-    {
-        const size_t ll = sizeof(struct tmp);
-        assert(ll + 64 * 2 == len - 2);
-        struct tmp* tmp = &h->tmp;
-        assert(tmp->junk1 == 0x574D);
-        assert(tmp->junk2 == 0x4D);
-        assert(STR_IS_VALUE(tmp->uid));
-        assert(STR_IS_VALUE(tmp->str1)||STR_IS_ZERO(tmp->str1));
-        assert(STR_IS_VALUE(tmp->str2)||STR_IS_ZERO(tmp->str2));
-        assert(tmp->value2==0|| tmp->value2==1);
-        fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%u,%u: %s:%s:%s]\n", offset, alignment, name, len, h->dept_id, h->dept_name,
-            tmp->value1, tmp->value2, tmp->uid, tmp->str1, tmp->str2);
-    }
-    else
-    {
-       // const char* str = h->hardware_id;
-       // my_print(stream, name, str, len - 2, offset);
-        assert(STR_IS_VALUE(h->dept_id)||STR_IS_ZERO(h->dept_id));
-        assert(STR_IS_VALUE(h->dept_name)||STR_IS_ZERO(h->dept_name));
-        assert(STR_IS_VALUE(h->hardware_id)||STR_IS_ZERO(h->hardware_id));
-        fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%s]\n", offset, alignment, name, len, h->dept_id, h->dept_name,
-            h->hardware_id);
-    }
-}
-
-void print_hardware(FILE* stream, const char* name, struct hardware* h, const size_t len, const size_t offset)
-{
-    assert(sizeof(struct hardware) == len);
-    assert(h->junk0 == 0);
-    uint32_t magic;
     memcpy(&magic, h->hardware_id, sizeof(magic));
     // '0x4d574d' 5068621
     if (magic == 0x4d574d) // ASCII 'MWM'
     {
-        const size_t ll = sizeof(struct tmp);
-        assert(ll == len - 2);
-        const size_t alignment = offset % 4u;
-        struct tmp* tmp = &h->tmp;
+        const size_t ll = sizeof(struct study_info);
+        assert(ll + 64 * 2 == len - 2);
+        struct study_info* tmp = &h->tmp;
         assert(tmp->junk1 == 0x574D);
         assert(tmp->junk2 == 0x4D);
-        assert(STR_IS_VALUE(tmp->uid));
-        assert(STR_IS_VALUE(tmp->str1)||STR_IS_ZERO(tmp->str1));
+        assert(STR_IS_VALUE(tmp->study_instance_uid));
+        assert(STR_IS_VALUE(tmp->study_id)||STR_IS_ZERO(tmp->study_id));
         assert(STR_IS_VALUE(tmp->str2)||STR_IS_ZERO(tmp->str2));
         assert(tmp->value2==0|| tmp->value2==1);
-        fprintf(stream, "%04zx %zu %s %zu: [%u,%u: %s:%s:%s]\n", offset, alignment, name, len, tmp->value1,
-                tmp->value2, tmp->uid, tmp->str1, tmp->str2);
+        fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%u,%u: %s:%s:%s]\n", offset, alignment, name, len, h->dept_id,
+                h->dept_name,
+                tmp->value1, tmp->value2, tmp->study_instance_uid, tmp->study_id, tmp->str2);
     }
     else
     {
-        const char* str = h->hardware_id;
-        my_print(stream, name, str, len - 2, offset);
+        // const char* str = h->hardware_id;
+        // my_print(stream, name, str, len - 2, offset);
+        assert(STR_IS_VALUE(h->dept_id)||STR_IS_ZERO(h->dept_id));
+        assert(STR_IS_VALUE(h->dept_name)||STR_IS_ZERO(h->dept_name));
+        assert(STR_IS_VALUE(h->hardware_id)||STR_IS_ZERO(h->hardware_id));
+        fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%s]\n", offset, alignment, name, len, h->dept_id, h->dept_name,
+                h->hardware_id);
     }
 }
 
@@ -738,8 +699,8 @@ struct info
     char aetitle3[0x3570 - 0x352C];
     struct service_name service_name2;
     struct junk11 junk11;
-    char orientation1[0x3630 - 0x35EC];
-    char orientation2[0x3674 - 0x3630];
+    char view_position1[0x3630 - 0x35EC];
+    char view_position2[0x3674 - 0x3630];
     uint32_t junk12[2];
     char study_id[60 + 4 * 2];
     char dicom_ds1[0x38C4 - 0x36C0];
@@ -869,8 +830,8 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, aetitle3);
     PRINT_SERVICE_NAME(stream, pinfo, service_name2);
     PRINT_JUNK11(stream, pinfo, junk11);
-    MY_PRINT(stream, pinfo, orientation1);
-    MY_PRINT(stream, pinfo, orientation2);
+    MY_PRINT(stream, pinfo, view_position1);
+    MY_PRINT(stream, pinfo, view_position2);
     MY_PRINT2(stream, pinfo, junk12);
     MY_PRINT(stream, pinfo, study_id);
     MY_PRINT(stream, pinfo, dicom_ds1);
