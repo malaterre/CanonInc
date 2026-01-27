@@ -193,7 +193,7 @@ struct config
 {
     char zeros[0x84 /* 132 */ + 1];
     char options[0x102 /* 258 */ + 1];
-    uint32_t status; /* O or 2 */
+    uint32_t tri_state; /* O, 1 or 2 */
 };
 
 void print_config(FILE* stream, const char* name, struct config* m, const size_t len, const size_t offset)
@@ -205,14 +205,14 @@ void print_config(FILE* stream, const char* name, struct config* m, const size_t
     char buffer[512 * 4];
     assert(len < sizeof(buffer));
     assert(is_buffer_all_zero(m->zeros, sizeof(m->zeros)) == 1);
-    assert(m->status == STATUS_EMPTY || m->status == STATUS_INITIALIZED);
-    if (m->status == 0)
+    assert(m->tri_state == TRI_STATE_ZERO || m->tri_state == TRI_STATE_ONE || m->tri_state == TRI_STATE_TWO);
+    if (m->tri_state == 0)
         assert(STR_IS_ZERO(m->options) == 1);
     else
         assert(STR_IS_VALUE(m->options) == 1);
     sprintf(buffer, "%.*s:%s:%u", (int)sizeof(m->zeros), m->zeros,
             options,
-            m->status);
+            m->tri_state);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
 }
 
@@ -231,8 +231,8 @@ struct endpoint_alt /* 404 */
     char hostname[0x44 /* 68 */];
     char options[0x104 /* 260 */];
     uint32_t value32;
-    uint32_t status; /* 0 or 2 */
-    uint32_t tri_state; /* 0, 1 or 2 */
+    uint32_t tri_state1; /* 0, 1 or 2 */
+    uint32_t tri_state2; /* 0, 1 or 2 */
 };
 
 enum PORTS
@@ -309,6 +309,7 @@ int value32_valid(const uint32_t value32)
         || value32 == 0x10400
         || value32 == 0x1000000
         || value32 == 0x1000001
+        || value32 == 0x1000100
         || value32 == 0x1000101
         || value32 == 0x1010000
     )
@@ -333,13 +334,13 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
             hostname,
             options,
             e->value32,
-            e->status,
-            e->tri_state);
-    assert(e->status == STATUS_EMPTY || e->status == STATUS_INITIALIZED);
-    assert(e->tri_state == TRI_STATE_ZERO || e->tri_state == TRI_STATE_TWO || e->tri_state == TRI_STATE_ONE);
+            e->tri_state1,
+            e->tri_state2);
+    assert(e->tri_state1 == TRI_STATE_ZERO || e->tri_state1 == TRI_STATE_TWO || e->tri_state1 == TRI_STATE_ONE);
+    assert(e->tri_state2 == TRI_STATE_ZERO || e->tri_state2 == TRI_STATE_TWO || e->tri_state2 == TRI_STATE_ONE);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
     assert(value32_valid(e->value32) == 1);
-    if (e->status == STATUS_EMPTY)
+    if (e->tri_state1 == TRI_STATE_ZERO )
     {
         assert(STR_IS_ZERO(e->ip) == 1);
         assert(STR_IS_ZERO(e->hostname) == 1|| STR_IS_PHI(e->hostname) == 1);
@@ -349,9 +350,9 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
     {
         assert(STR_IS_VALUE(e->ip) == 1 || STR_IS_PHI(e->ip) == 1 || STR_IS_ZERO(e->ip) == 1);
         //assert(e->port_number != 0);
-        assert(STR_IS_VALUE(e->hostname) == 1 /*|| STR_IS_PHI(e->hostname) == 1*/);
+        assert(STR_IS_VALUE(e->hostname) == 1 || STR_IS_ZERO(e->hostname) == 1);
         // assert(STR_IS_VALUE(e->options) == 1|| STR_IS_PHI(e->options) == 1 || STR_IS_ZERO(e->options) == 1);
-        assert(STR_IS_VALUE(e->options) == 1);
+        assert(STR_IS_VALUE(e->options) == 1|| STR_IS_ZERO(e->options) == 1);
     }
 }
 
@@ -676,7 +677,7 @@ struct info
 #else
     uint32_t junk3a[6];
     uint32_t junk3b[13];
-    uint32_t junk3c[49-6-13-8];
+    uint32_t junk3c[49 - 6 - 13 - 8];
     uint32_t junk3d[8];
 #endif
     struct hardware hardware;
