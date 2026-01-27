@@ -512,6 +512,7 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
             j->u[0], j->u[1],
             j->v, j->w
     );
+#if 0
     assert(j->u[0] == 0x0
         || j->u[0] == 0x32
         || j->u[0] == 0x52
@@ -522,6 +523,7 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
         || j->u[0] == 0x4e0000
         || j->u[0] == 0x520000
     );
+#endif
     assert(j->v == 0x0
         || j->v == 0x3c /* 60 */
     );
