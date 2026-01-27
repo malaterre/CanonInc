@@ -438,6 +438,52 @@ struct hardware
     };
 };
 
+struct hardware2
+{
+    char dept_id[0x2BA9 - 0x2b68];
+    char dept_name[0x2BE8 - 0x2bA9 + 2];
+
+    union
+    {
+        char hardware_id[0x2df0 - 0x2bea - 4];
+        struct tmp tmp;
+    };
+};
+
+void print_hardware2(FILE* stream, const char* name, struct hardware2* h, const size_t len, const size_t offset)
+{
+    assert(sizeof(struct hardware2) == len);
+    const size_t alignment = offset % 4u;
+    //MY_PRINT(stream, pinfo, dept_id);
+    //MY_PRINT(stream, pinfo, dept_name);
+    uint32_t magic;
+    memcpy(&magic, h->hardware_id, sizeof(magic));    
+    // '0x4d574d' 5068621
+    if (magic == 0x4d574d) // ASCII 'MWM'
+    {
+        const size_t ll = sizeof(struct tmp);
+        assert(ll + 64 * 2 == len - 2);
+        struct tmp* tmp = &h->tmp;
+        assert(tmp->junk1 == 0x574D);
+        assert(tmp->junk2 == 0x4D);
+        assert(STR_IS_VALUE(tmp->uid));
+        assert(STR_IS_VALUE(tmp->str1)||STR_IS_ZERO(tmp->str1));
+        assert(STR_IS_VALUE(tmp->str2)||STR_IS_ZERO(tmp->str2));
+        assert(tmp->value2==0|| tmp->value2==1);
+        fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%u,%u: %s:%s:%s]\n", offset, alignment, name, len, h->dept_id, h->dept_name,
+            tmp->value1, tmp->value2, tmp->uid, tmp->str1, tmp->str2);
+    }
+    else
+    {
+       // const char* str = h->hardware_id;
+       // my_print(stream, name, str, len - 2, offset);
+        assert(STR_IS_VALUE(h->dept_id)||STR_IS_ZERO(h->dept_id));
+        assert(STR_IS_VALUE(h->dept_name)||STR_IS_ZERO(h->dept_name));
+        assert(STR_IS_VALUE(h->hardware_id)||STR_IS_ZERO(h->hardware_id));
+        fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%s]\n", offset, alignment, name, len, h->dept_id, h->dept_name,
+            h->hardware_id);
+    }
+}
 
 void print_hardware(FILE* stream, const char* name, struct hardware* h, const size_t len, const size_t offset)
 {
@@ -664,9 +710,13 @@ struct info
     // not aligned:
     uint16_t junk6[1];
     char fixme1[0x2B68 - 0x2aa4];
-    char str1[0x2BA9 - 0x2b68];
-    char str2[0x2BE8 - 0x2bA9];
+#if 0
+    char dept_id[0x2BA9 - 0x2b68];
+    char dept_name[0x2BE8 - 0x2bA9];
     struct hardware hardware;
+#else
+    struct hardware2 hardware;
+#endif
     uint32_t small_number[1];
     char study_desc[0x2ff0 - 0x2df0];
     uint32_t junk7[1];
@@ -737,6 +787,8 @@ struct info
 my_print7((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define PRINT_ENDPOINT_ALT(stream, struct_ptr, member) \
 print_endpoint_alt((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+#define PRINT_HARDWARE2(stream, struct_ptr, member) \
+print_hardware2((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define PRINT_HARDWARE(stream, struct_ptr, member) \
 print_hardware((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define PRINT_SERVICE_NAME(stream, struct_ptr, member) \
@@ -792,9 +844,13 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     assert(pinfo-> junk6 [0]== 0);
     //MY_PRINT2(stream, pinfo, junk6);
     MY_PRINT(stream, pinfo, fixme1);
-    MY_PRINT(stream, pinfo, str1);
-    MY_PRINT(stream, pinfo, str2);
+#if 0
+    MY_PRINT(stream, pinfo, dept_id);
+    MY_PRINT(stream, pinfo, dept_name);
     PRINT_HARDWARE(stream, pinfo, hardware);
+#else
+    PRINT_HARDWARE2(stream, pinfo, hardware);
+#endif
     MY_PRINT2(stream, pinfo, small_number);
     assert(pinfo->small_number[0]!=0);
     MY_PRINT(stream, pinfo, study_desc);
