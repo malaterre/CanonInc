@@ -354,15 +354,15 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
     }
 }
 
-struct junk5 /* 88 */
+struct junk1 /* 88 */
 {
     uint32_t zeros[17];
     uint32_t values[5]; // patient_id/study_id followed by series_number x 2 ?
 };
 
-void my_print6(FILE* stream, const char* name, struct junk5* j, const size_t len, const size_t offset)
+void my_print6(FILE* stream, const char* name, struct junk1* j, const size_t len, const size_t offset)
 {
-    assert(sizeof(struct junk5) == len);
+    assert(sizeof(struct junk1) == len);
     const size_t alignment = offset % 4u;
     assert(alignment==0);
     char buffer[512 * 4];
@@ -427,7 +427,7 @@ struct study_info
     char str2[510 - 86];
 };
 
-struct hardware2
+struct hardware
 {
     char dept_id[0x2BA9 - 0x2b68];
     char dept_name[0x2BEA - 0x2bA9];
@@ -439,9 +439,9 @@ struct hardware2
     };
 };
 
-void print_hardware2(FILE* stream, const char* name, struct hardware2* h, const size_t len, const size_t offset)
+void print_hardware2(FILE* stream, const char* name, struct hardware* h, const size_t len, const size_t offset)
 {
-    assert(sizeof(struct hardware2) == len);
+    assert(sizeof(struct hardware) == len);
     const size_t alignment = offset % 4u;
     //MY_PRINT(stream, pinfo, dept_id);
     //MY_PRINT(stream, pinfo, dept_name);
@@ -496,7 +496,7 @@ void print_service_name(FILE* stream, const char* name, struct service_name* j, 
             j->four_state);
 }
 
-struct junk11
+struct junk8
 {
     uint32_t u32;
     uint32_t hexs[2];
@@ -509,9 +509,9 @@ struct junk11
     uint32_t w;
 };
 
-void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t len, const size_t offset)
+void print_junk11(FILE* stream, const char* name, struct junk8* j, const size_t len, const size_t offset)
 {
-    assert(sizeof(struct junk11) == len);
+    assert(sizeof(struct junk8) == len);
     const size_t alignment = offset % 4u;
     fprintf(stream, "%04zx %zu %s %zu: [%08u:%x:%x:%u:%u:%x:%x:%u:%u]\n", offset, alignment, name, len, j->u32,
             j->hexs[0], j->hexs[1],
@@ -615,7 +615,7 @@ void print_junk11(FILE* stream, const char* name, struct junk11* j, const size_t
     // FIXME j->u[1] / j->hexs[1] seem correlated
 }
 
-struct junk13
+struct junk10
 {
     union
     {
@@ -631,9 +631,9 @@ struct junk13
     float f3;
 };
 
-void print_junk13(FILE* stream, const char* name, const struct junk13* j, const size_t len, const size_t offset)
+void print_junk13(FILE* stream, const char* name, const struct junk10* j, const size_t len, const size_t offset)
 {
-    assert(sizeof(struct junk13) == len);
+    assert(sizeof(struct junk10) == len);
     const size_t alignment = offset % 4u;
     for (int i = 0; i < 4; ++i)
     {
@@ -652,7 +652,7 @@ struct info
     struct config config2;
     struct endpoint endpoint1;
     struct endpoint endpoint2;
-    struct junk5 junk5;
+    struct junk1 junk1;
     struct str3_1 str3_1;
     char am[0x0c96 - 0x0a94];
     // 'Swiss721 BT' is an actual font name:
@@ -669,28 +669,29 @@ struct info
     char format5[0x26A1 - 0x22a0];
     char format6[0x2aaa - 0x26A1 - 8];
     // not aligned:
-    uint16_t junk6[1];
-    char fixme1[0x2B68 - 0x2aa4];
+    uint16_t junk2[1];
 #if 0
-    char dept_id[0x2BA9 - 0x2b68];
-    char dept_name[0x2BE8 - 0x2bA9];
-    struct hardware hardware;
+    char fixme1[0x2B68 - 0x2aa4];
 #else
-    struct hardware2 hardware;
+    uint32_t junk3a[6];
+    uint32_t junk3b[13];
+    uint32_t junk3c[49-6-13-8];
+    uint32_t junk3d[8];
 #endif
+    struct hardware hardware;
     uint32_t small_number[1];
     char study_desc[0x2ff0 - 0x2df0];
-    uint32_t junk7[1];
+    uint32_t junk4[1];
     char versions[0x3034 - 0x2ff4];
-    uint32_t junk8[9];
+    uint32_t junk5[9];
     /* start endpoint */
     struct endpoint_alt endpoint_alt1;
     /* end endpoint */
-    uint32_t junk9[7];
+    uint32_t junk6[7];
     /* start endpoint */
     struct endpoint_alt endpoint_alt2;
     /* end endpoint */
-    uint32_t junk10[11];
+    uint32_t junk7[11];
     char datetime1[68];
     char datetime2[136 - 68];
     char service_name1[0x34A4 - 0x3458];
@@ -698,14 +699,14 @@ struct info
     char aetitle2[0x352C - 0x34E8];
     char aetitle3[0x3570 - 0x352C];
     struct service_name service_name2;
-    struct junk11 junk11;
+    struct junk8 junk8;
     char view_position1[0x3630 - 0x35EC];
     char view_position2[0x3674 - 0x3630];
-    uint32_t junk12[2];
+    uint32_t junk9[2];
     char study_id[60 + 4 * 2];
     char dicom_ds1[0x38C4 - 0x36C0];
     char dicom_ds2[0x3AC0 - 0X38C4 + 8];
-    struct junk13 junk13;
+    struct junk10 junk10;
     char gender[0x3B2C - 0x3AE4];
     char padding[0x3B70 - 0x3B2C];
     char weight1[0x3BB4 - 0x3B70];
@@ -787,7 +788,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     PRINT_CONFIG(stream, pinfo, config2);
     PRINT_ENDPOINT(stream, pinfo, endpoint1);
     PRINT_ENDPOINT(stream, pinfo, endpoint2);
-    MY_PRINT6(stream, pinfo, junk5);
+    MY_PRINT6(stream, pinfo, junk1);
     MY_PRINT7(stream, pinfo, str3_1);
     MY_PRINT(stream, pinfo, am);
     MY_PRINT(stream, pinfo, font1);
@@ -802,26 +803,27 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, format4);
     MY_PRINT(stream, pinfo, format5);
     MY_PRINT(stream, pinfo, format6);
-    assert(pinfo-> junk6 [0]== 0);
+    assert(pinfo-> junk2 [0]== 0);
     //MY_PRINT2(stream, pinfo, junk6);
-    MY_PRINT(stream, pinfo, fixme1);
 #if 0
-    MY_PRINT(stream, pinfo, dept_id);
-    MY_PRINT(stream, pinfo, dept_name);
-    PRINT_HARDWARE(stream, pinfo, hardware);
+    MY_PRINT(stream, pinfo, fixme1);
 #else
-    PRINT_HARDWARE2(stream, pinfo, hardware);
+    MY_PRINT2(stream, pinfo, junk3a);
+    MY_PRINT2(stream, pinfo, junk3b);
+    MY_PRINT2(stream, pinfo, junk3c);
+    MY_PRINT2(stream, pinfo, junk3d);
 #endif
+    PRINT_HARDWARE2(stream, pinfo, hardware);
     MY_PRINT2(stream, pinfo, small_number);
     assert(pinfo->small_number[0]!=0);
     MY_PRINT(stream, pinfo, study_desc);
-    MY_PRINT2(stream, pinfo, junk7);
+    MY_PRINT2(stream, pinfo, junk4);
     MY_PRINT(stream, pinfo, versions);
-    MY_PRINT2(stream, pinfo, junk8);
+    MY_PRINT2(stream, pinfo, junk5);
     PRINT_ENDPOINT_ALT(stream, pinfo, endpoint_alt1);
-    MY_PRINT2(stream, pinfo, junk9);
+    MY_PRINT2(stream, pinfo, junk6);
     PRINT_ENDPOINT_ALT(stream, pinfo, endpoint_alt2);
-    MY_PRINT2(stream, pinfo, junk10);
+    MY_PRINT2(stream, pinfo, junk7);
     MY_PRINT(stream, pinfo, datetime1);
     MY_PRINT(stream, pinfo, datetime2);
     MY_PRINT(stream, pinfo, service_name1);
@@ -829,15 +831,15 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, aetitle2);
     MY_PRINT(stream, pinfo, aetitle3);
     PRINT_SERVICE_NAME(stream, pinfo, service_name2);
-    PRINT_JUNK11(stream, pinfo, junk11);
+    PRINT_JUNK11(stream, pinfo, junk8);
     MY_PRINT(stream, pinfo, view_position1);
     MY_PRINT(stream, pinfo, view_position2);
-    MY_PRINT2(stream, pinfo, junk12);
+    MY_PRINT2(stream, pinfo, junk9);
     MY_PRINT(stream, pinfo, study_id);
     MY_PRINT(stream, pinfo, dicom_ds1);
     MY_PRINT(stream, pinfo, dicom_ds2);
     //MY_PRINT2(stream, pinfo, junk13);
-    PRINT_JUNK13(stream, pinfo, junk13);
+    PRINT_JUNK13(stream, pinfo, junk10);
     if (size >= SIZE1)
         MY_PRINT(stream, pinfo, gender);
     if (size >= SIZE2)
