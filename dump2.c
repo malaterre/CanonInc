@@ -731,7 +731,7 @@ struct info
     char dicom_ds2[0x3AC0 - 0X38C4 + 8];
     struct junk10 junk10;
     char gender[0x3B2C - 0x3AE4];
-    char padding[0x3B70 - 0x3B2C];
+    char anatomy[0x3B70 - 0x3B2C];
     char patient_position[0x3BB4 - 0x3B70];
     char lat1[0x3CC4 - 0x3BB4];
     char mode1[0x3DC8 - 0x3CC4];
@@ -789,7 +789,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     const size_t off0 = offsetof(struct info, gender);
     assert(off0==SIZE0);
     const size_t SIZE1 = 15148;
-    const size_t off1 = offsetof(struct info, padding);
+    const size_t off1 = offsetof(struct info, anatomy);
     assert(off1==SIZE1);
     const size_t SIZE2 = 18748; // 4687 * 4
     const size_t s2 = sizeof(struct info);
@@ -867,7 +867,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
         MY_PRINT(stream, pinfo, gender);
     if (size >= SIZE2)
     {
-        MY_PRINT(stream, pinfo, padding);
+        MY_PRINT(stream, pinfo, anatomy);
         MY_PRINT(stream, pinfo, patient_position);
         MY_PRINT(stream, pinfo, lat1);
         MY_PRINT(stream, pinfo, mode1);
