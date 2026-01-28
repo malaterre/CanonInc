@@ -189,7 +189,7 @@ size_t make_str(char* out, const size_t out_len, const char* in, const size_t in
 #define MAKE_STR(out, in) \
 make_str(out, sizeof(out), (in), sizeof(in))
 
-struct config
+struct config /* 396 */
 {
     char zeros[0x84 /* 132 */ + 1];
     char options[0x102 /* 258 */ + 1];
@@ -293,29 +293,44 @@ void print_endpoint(FILE* stream, const char* name, struct endpoint* e, const si
 
 int value32_valid(const uint32_t value32)
 {
+    
+    union
+    {
+        uint32_t hex;
+        uint8_t hexs[4];
+    } u;
+    u.hex = value32;
+#if 1
+    assert( u.hexs[0] == 0 || u.hexs[0] == 1 );
+    assert( /*u.hexs[1] >= 0 &&*/ u.hexs[1] <= 5 );
+    assert( u.hexs[2] == 0 || u.hexs[2] == 1 );
+    assert( u.hexs[3] == 0 || u.hexs[3] == 1 );
+    return 1;
+#else
     if (value32 == 0x0
-        || value32 == 0x1
-        || value32 == 0x100
-        || value32 == 0x200
-        || value32 == 0x201
-        || value32 == 0x300
-        || value32 == 0x400
-        || value32 == 0x500
-        || value32 == 0x10000
-        || value32 == 0x10001
-        || value32 == 0x10100
-        || value32 == 0x10200
-        || value32 == 0x10300
-        || value32 == 0x10400
-        || value32 == 0x1000000
-        || value32 == 0x1000001
-        || value32 == 0x1000100
-        || value32 == 0x1000101
-        || value32 == 0x1000200
-        || value32 == 0x1010000
+        || value32 == 0x00000001
+        || value32 == 0x00000100
+        || value32 == 0x00000200
+        || value32 == 0x00000201
+        || value32 == 0x00000300
+        || value32 == 0x00000400
+        || value32 == 0x00000500
+        || value32 == 0x00010000
+        || value32 == 0x00010001
+        || value32 == 0x00010100
+        || value32 == 0x00010200
+        || value32 == 0x00010300
+        || value32 == 0x00010400
+        || value32 == 0x01000000
+        || value32 == 0x01000001
+        || value32 == 0x01000100
+        || value32 == 0x01000101
+        || value32 == 0x01000200
+        || value32 == 0x01010000
     )
         return 1;
     return 0;
+#endif
 }
 
 void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, const size_t len, const size_t offset)
@@ -427,7 +442,7 @@ struct study_info
     uint16_t value2;
     char study_instance_uid[0X2C33 - 0X2BF2];
     char study_id[0X2C44 - 0X2C33];
-    char str2[510 - 86];
+    char requested_procedure_id[510 - 86];
 };
 
 struct hardware
@@ -460,11 +475,11 @@ void print_hardware2(FILE* stream, const char* name, struct hardware* h, const s
         assert(tmp->junk2 == 0x4D);
         assert(STR_IS_VALUE(tmp->study_instance_uid));
         assert(STR_IS_VALUE(tmp->study_id)||STR_IS_ZERO(tmp->study_id));
-        assert(STR_IS_VALUE(tmp->str2)||STR_IS_ZERO(tmp->str2));
+        assert(STR_IS_VALUE(tmp->requested_procedure_id)||STR_IS_ZERO(tmp->requested_procedure_id));
         assert(tmp->value2==0|| tmp->value2==1);
         fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%u,%u: %s:%s:%s]\n", offset, alignment, name, len, h->dept_id,
                 h->dept_name,
-                tmp->value1, tmp->value2, tmp->study_instance_uid, tmp->study_id, tmp->str2);
+                tmp->value1, tmp->value2, tmp->study_instance_uid, tmp->study_id, tmp->requested_procedure_id);
     }
     else
     {
@@ -712,7 +727,7 @@ struct info
     struct junk10 junk10;
     char gender[0x3B2C - 0x3AE4];
     char padding[0x3B70 - 0x3B2C];
-    char weight1[0x3BB4 - 0x3B70];
+    char patient_position[0x3BB4 - 0x3B70];
     char lat1[0x3CC4 - 0x3BB4];
     char mode1[0x3DC8 - 0x3CC4];
     char mode2[0x3ECC - 0x3DC8];
@@ -848,7 +863,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     if (size >= SIZE2)
     {
         MY_PRINT(stream, pinfo, padding);
-        MY_PRINT(stream, pinfo, weight1);
+        MY_PRINT(stream, pinfo, patient_position);
         MY_PRINT(stream, pinfo, lat1);
         MY_PRINT(stream, pinfo, mode1);
         MY_PRINT(stream, pinfo, mode2);
