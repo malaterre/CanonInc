@@ -341,25 +341,28 @@ void print_endpoint_alt(FILE* stream, const char* name, const struct endpoint_al
     }
 }
 
-struct junk1 /* 88 */
+struct patient_info /* 88 */
 {
     uint32_t zeros[17];
-    uint32_t values[5]; // patient_id/study_id followed by series_number x 2 ?
+    uint32_t patient_id;
+    uint32_t study_id;
+    uint32_t ones[2];
+    uint32_t dup;
 };
 
-void print_junk1(FILE* stream, const char* name, struct junk1* j, const size_t len, const size_t offset)
+void print_patient_info(FILE* stream, const char* name, const struct patient_info* j, const size_t len, const size_t offset)
 {
-    assert(sizeof(struct junk1) == len);
+    assert(sizeof(struct patient_info) == len);
     const size_t alignment = offset % 4u;
     assert(alignment==0);
     char buffer[512 * 4];
     assert(len < sizeof(buffer));
     for (int i = 0; i < 17; ++i)
         assert(j->zeros[i] == 0);
-    assert(j->values[2] == 1);
-    assert(j->values[3] == 1);
-    assert(j->values[1] == j->values[4]);
-    sprintf(buffer, "%u,%u", j->values[0], j->values[1]);
+    assert(j->study_id == j->dup);
+    assert(j->ones[0] == 1);
+    assert(j->ones[1] == 1);
+    sprintf(buffer, "%u,%u", j->patient_id, j->study_id);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
 }
 
@@ -639,7 +642,7 @@ struct info
     struct config config2;
     struct endpoint endpoint1;
     struct endpoint endpoint2;
-    struct junk1 junk1;
+    struct patient_info patient_info;
     struct str3_1 str3_1;
     char am[0x0c96 - 0x0a94];
     // 'Swiss721 BT' is an actual font name:
@@ -729,8 +732,8 @@ struct info
 #define PRINT_CONFIG(stream, struct_ptr, member) \
   print_config((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
-#define PRINT_JUNK1(stream, struct_ptr, member) \
-  print_junk1((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+#define PRINT_PATIENT_INFO(stream, struct_ptr, member) \
+  print_patient_info((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
 #define MY_PRINT7(stream, struct_ptr, member) \
 my_print7((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
@@ -775,7 +778,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     PRINT_CONFIG(stream, pinfo, config2);
     PRINT_ENDPOINT(stream, pinfo, endpoint1);
     PRINT_ENDPOINT(stream, pinfo, endpoint2);
-    PRINT_JUNK1(stream, pinfo, junk1);
+    PRINT_PATIENT_INFO(stream, pinfo, patient_info);
     MY_PRINT7(stream, pinfo, str3_1);
     MY_PRINT(stream, pinfo, am);
     MY_PRINT(stream, pinfo, font1);
