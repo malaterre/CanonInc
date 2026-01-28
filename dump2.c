@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -265,19 +264,10 @@ void print_endpoint(FILE* stream, const char* name, struct endpoint* e, const si
     char ip[512];
     char hostname[512];
     char options[512];
-    size_t ret;
     MAKE_STR(ip, e->ip);
-    bool trash = false;
-    ret = MAKE_STR(hostname, e->hostname);
-    if (ret == (size_t)-1)
-    {
-        trash = true;
-    }
+    MAKE_STR(hostname, e->hostname);
     MAKE_STR(options, e->options);
-    sprintf(buffer, "%s:%d:%s:%s:%u [%s]", ip, e->port_numbers[PORT_INDEX],
-            hostname,
-            options,
-            e->tri_state, trash ? " TRASH" : "");
+    sprintf(buffer, "%s:%d:%s:%s:%u", ip, e->port_numbers[PORT_INDEX], hostname, options, e->tri_state);
     assert(e->tri_state == TRI_STATE_ONE || e->tri_state == TRI_STATE_TWO
         || e->tri_state == TRI_STATE_ZERO);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
