@@ -71,12 +71,61 @@ is_value((str), sizeof(str))
 
 #define STR_IS_PHI(str) \
 is_phi((str), sizeof(str))
+size_t make_str(char* out, const size_t out_len, const char* in, const size_t in_len)
+{
+    assert(out_len > 0);
+    assert(in_len > 0);
+    assert(out != NULL);
+    assert(in != NULL);
+    assert(out_len > in_len);
+    memcpy(out, in, in_len);
+    out[in_len] = '\0';
+    assert(in_len >= 2);
+    if (out[0] == 0)
+    {
+        if (out[1] == 0)
+        {
+            // ZERO
+            assert(is_buffer_all_zero(out, in_len) == 1);
+            return 0;
+        }
+        // PHI
+        out[0] = 0x7F; // DEL
+        out[0] = '?';
+        out[0] = ' ';
+        const size_t ret = strlen(out);
+        assert(ret <= in_len);
+        assert(is_buffer_all_zero(out + ret, in_len - ret) == 1);
+        return ret;
+    }
+    // VALUE case
+    const size_t ret = strlen(out);
+    assert(ret <= in_len);
+    if (is_buffer_all_zero(out + ret, in_len - ret) == 1)
+        return ret;
+    // Handle TRASH
+    out[ret] = '(';
+    const size_t ret2 = strlen(out);
+    out[ret2] = ')';
+    assert(ret2 < in_len);
+    assert(is_buffer_all_zero(out + ret2 + 1, in_len - ret2 - 1) == 1);
+    assert(out_len > ret2);
+    return ret2 + 1;
+}
+
+#define MAKE_STR(out, in) \
+make_str(out, sizeof(out), (in), sizeof(in))
 
 void my_print(FILE* stream, const char* name, const char* str, const size_t len, const size_t offset)
 {
-    // digital trash
+    const size_t alignment = offset % 4u;
     char buffer[512 * 4];
     assert(len < sizeof(buffer));
+#if 1
+    make_str(buffer, sizeof(buffer), str, len);
+    fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
+#else
+    // digital trash
     memcpy(buffer, str, len);
     buffer[len] = '\0';
     // end
@@ -89,7 +138,6 @@ void my_print(FILE* stream, const char* name, const char* str, const size_t len,
     }
     const size_t l2 = strlen(buffer);
     const int ret2 = is_buffer_all_zero(buffer + l2, len - l2);
-    const size_t alignment = offset % 4u;
     if (ret == 1)
         fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, str);
     else if (ret2 == 1)
@@ -97,6 +145,7 @@ void my_print(FILE* stream, const char* name, const char* str, const size_t len,
         fprintf(stream, "%04zx %zu %s %zu: [%s] PHI\n", offset, alignment, name, len, buffer);
     else
         fprintf(stream, "%04zx %zu %s %zu: [%s] TRASH\n", offset, alignment, name, len, str);
+#endif
 }
 
 void my_print2(FILE* stream, const char* name, const uint32_t* d, const size_t len, const size_t offset)
@@ -150,50 +199,6 @@ enum FOUR_STATE
     FOUR_STATE_THREE = 3
 };
 
-size_t make_str(char* out, const size_t out_len, const char* in, const size_t in_len)
-{
-    assert(out_len > 0);
-    assert(in_len > 0);
-    assert(out != NULL);
-    assert(in != NULL);
-    assert(out_len > in_len);
-    memcpy(out, in, in_len);
-    out[in_len] = '\0';
-    assert(in_len >= 2);
-    if (out[0] == 0)
-    {
-        if (out[1] == 0)
-        {
-            // ZERO
-            assert(is_buffer_all_zero(out, in_len) == 1);
-            return 0;
-        }
-        // PHI
-        out[0] = 0x7F; // DEL
-        out[0] = '?';
-        out[0] = ' ';
-        const size_t ret = strlen(out);
-        assert(ret <= in_len);
-        assert(is_buffer_all_zero(out + ret, in_len - ret) == 1);
-        return ret;
-    }
-    // VALUE case
-    const size_t ret = strlen(out);
-    assert(ret <= in_len);
-    if (is_buffer_all_zero(out + ret, in_len - ret) == 1)
-        return ret;
-    // Handle TRASH
-    out[ret] = '(';
-    const size_t ret2 = strlen(out);
-    out[ret2] = ')';
-    assert(ret2 < in_len);
-    assert(is_buffer_all_zero(out + ret2 + 1, in_len - ret2 - 1) == 1);
-    assert(out_len > ret2);
-    return ret2 + 1;
-}
-
-#define MAKE_STR(out, in) \
-make_str(out, sizeof(out), (in), sizeof(in))
 
 struct config /* 396 */
 {
