@@ -183,7 +183,14 @@ size_t make_str(char* out, const size_t out_len, const char* in, const size_t in
     assert(ret <= in_len);
     if (is_buffer_all_zero(out + ret, in_len - ret) == 1)
         return ret;
-    return -1;
+    // Handle TRASH
+    out[ret] = '(';
+    const size_t ret2 = strlen(out);
+    out[ret2] = ')';
+    assert(ret2 < in_len);
+    assert(is_buffer_all_zero(out + ret2 + 1, in_len - ret2 - 1) == 1);
+    assert(out_len > ret2);
+    return ret2 + 1;
 }
 
 #define MAKE_STR(out, in) \
@@ -293,7 +300,6 @@ void print_endpoint(FILE* stream, const char* name, struct endpoint* e, const si
 
 int value32_valid(const uint32_t value32)
 {
-    
     union
     {
         uint32_t hex;
@@ -301,10 +307,10 @@ int value32_valid(const uint32_t value32)
     } u;
     u.hex = value32;
 #if 1
-    assert( u.hexs[0] == 0 || u.hexs[0] == 1 );
-    assert( /*u.hexs[1] >= 0 &&*/ u.hexs[1] <= 5 );
-    assert( u.hexs[2] == 0 || u.hexs[2] == 1 );
-    assert( u.hexs[3] == 0 || u.hexs[3] == 1 );
+    assert(u.hexs[0] == 0 || u.hexs[0] == 1);
+    assert(/*u.hexs[1] >= 0 &&*/ u.hexs[1] <= 5);
+    assert(u.hexs[2] == 0 || u.hexs[2] == 1);
+    assert(u.hexs[3] == 0 || u.hexs[3] == 1);
     return 1;
 #else
     if (value32 == 0x0
@@ -333,7 +339,8 @@ int value32_valid(const uint32_t value32)
 #endif
 }
 
-void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, const size_t len, const size_t offset)
+void print_endpoint_alt(FILE* stream, const char* name, const struct endpoint_alt* e, const size_t len,
+                        const size_t offset)
 {
     assert(sizeof(struct endpoint_alt) == len);
     const size_t alignment = offset % 4u;
@@ -356,7 +363,7 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
     assert(e->tri_state2 == TRI_STATE_ZERO || e->tri_state2 == TRI_STATE_TWO || e->tri_state2 == TRI_STATE_ONE);
     fprintf(stream, "%04zx %zu %s %zu: [%s]\n", offset, alignment, name, len, buffer);
     assert(value32_valid(e->value32) == 1);
-    if (e->tri_state1 == TRI_STATE_ZERO )
+    if (e->tri_state1 == TRI_STATE_ZERO)
     {
         assert(STR_IS_ZERO(e->ip) == 1);
         assert(STR_IS_ZERO(e->hostname) == 1|| STR_IS_PHI(e->hostname) == 1);
@@ -365,10 +372,8 @@ void print_endpoint_alt(FILE* stream, const char* name, struct endpoint_alt* e, 
     else
     {
         assert(STR_IS_VALUE(e->ip) == 1 || STR_IS_PHI(e->ip) == 1 || STR_IS_ZERO(e->ip) == 1);
-        //assert(e->port_number != 0);
         assert(STR_IS_VALUE(e->hostname) == 1 || STR_IS_ZERO(e->hostname) == 1);
-        // assert(STR_IS_VALUE(e->options) == 1|| STR_IS_PHI(e->options) == 1 || STR_IS_ZERO(e->options) == 1);
-        assert(STR_IS_VALUE(e->options) == 1|| STR_IS_ZERO(e->options) == 1);
+        assert(STR_IS_VALUE(e->options) == 1 || STR_IS_ZERO(e->options) == 1);
     }
 }
 
@@ -495,7 +500,7 @@ void print_hardware2(FILE* stream, const char* name, struct hardware* h, const s
 
 struct service_name
 {
-    char service_name[0x35B8 - 0x3570 - 4];
+    char service_name[0x35B4 - 0x3570];
     uint32_t status; /* 0 or 2 */
     uint32_t four_state; /* 0, 1 or 3 */
 };
