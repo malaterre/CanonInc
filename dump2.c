@@ -296,37 +296,11 @@ int value32_valid(const uint32_t value32)
         uint8_t hexs[4];
     } u;
     u.hex = value32;
-#if 1
     assert(u.hexs[0] == 0 || u.hexs[0] == 1);
     assert(/*u.hexs[1] >= 0 &&*/ u.hexs[1] <= 5);
     assert(u.hexs[2] == 0 || u.hexs[2] == 1);
     assert(u.hexs[3] == 0 || u.hexs[3] == 1);
     return 1;
-#else
-    if (value32 == 0x0
-        || value32 == 0x00000001
-        || value32 == 0x00000100
-        || value32 == 0x00000200
-        || value32 == 0x00000201
-        || value32 == 0x00000300
-        || value32 == 0x00000400
-        || value32 == 0x00000500
-        || value32 == 0x00010000
-        || value32 == 0x00010001
-        || value32 == 0x00010100
-        || value32 == 0x00010200
-        || value32 == 0x00010300
-        || value32 == 0x00010400
-        || value32 == 0x01000000
-        || value32 == 0x01000001
-        || value32 == 0x01000100
-        || value32 == 0x01000101
-        || value32 == 0x01000200
-        || value32 == 0x01010000
-    )
-        return 1;
-    return 0;
-#endif
 }
 
 void print_endpoint_alt(FILE* stream, const char* name, const struct endpoint_alt* e, const size_t len,
@@ -373,7 +347,7 @@ struct junk1 /* 88 */
     uint32_t values[5]; // patient_id/study_id followed by series_number x 2 ?
 };
 
-void my_print6(FILE* stream, const char* name, struct junk1* j, const size_t len, const size_t offset)
+void print_junk1(FILE* stream, const char* name, struct junk1* j, const size_t len, const size_t offset)
 {
     assert(sizeof(struct junk1) == len);
     const size_t alignment = offset % 4u;
@@ -522,7 +496,7 @@ struct junk8
     uint32_t w;
 };
 
-void print_junk11(FILE* stream, const char* name, struct junk8* j, const size_t len, const size_t offset)
+void print_junk8(FILE* stream, const char* name, struct junk8* j, const size_t len, const size_t offset)
 {
     assert(sizeof(struct junk8) == len);
     const size_t alignment = offset % 4u;
@@ -755,8 +729,8 @@ struct info
 #define PRINT_CONFIG(stream, struct_ptr, member) \
   print_config((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
-#define MY_PRINT6(stream, struct_ptr, member) \
-  my_print6((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+#define PRINT_JUNK1(stream, struct_ptr, member) \
+  print_junk1((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
 #define MY_PRINT7(stream, struct_ptr, member) \
 my_print7((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
@@ -768,8 +742,8 @@ print_hardware2((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->m
 print_hardware((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define PRINT_SERVICE_NAME(stream, struct_ptr, member) \
 print_service_name((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
-#define PRINT_JUNK11(stream, struct_ptr, member) \
-print_junk11((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
+#define PRINT_JUNK8(stream, struct_ptr, member) \
+print_junk8((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 #define PRINT_JUNK13(stream, struct_ptr, member) \
 print_junk13((stream), #member, &(struct_ptr)->member, sizeof((struct_ptr)->member), offsetof(struct info,member))
 
@@ -801,7 +775,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     PRINT_CONFIG(stream, pinfo, config2);
     PRINT_ENDPOINT(stream, pinfo, endpoint1);
     PRINT_ENDPOINT(stream, pinfo, endpoint2);
-    MY_PRINT6(stream, pinfo, junk1);
+    PRINT_JUNK1(stream, pinfo, junk1);
     MY_PRINT7(stream, pinfo, str3_1);
     MY_PRINT(stream, pinfo, am);
     MY_PRINT(stream, pinfo, font1);
@@ -844,7 +818,7 @@ static void process_canon(FILE* stream, const char* data, const size_t size, con
     MY_PRINT(stream, pinfo, aetitle2);
     MY_PRINT(stream, pinfo, aetitle3);
     PRINT_SERVICE_NAME(stream, pinfo, service_name2);
-    PRINT_JUNK11(stream, pinfo, junk8);
+    PRINT_JUNK8(stream, pinfo, junk8);
     MY_PRINT(stream, pinfo, view_position1);
     MY_PRINT(stream, pinfo, view_position2);
     MY_PRINT2(stream, pinfo, junk9);
