@@ -604,6 +604,7 @@ void print_junk8(FILE* stream, const char* name, struct junk8* j, const size_t l
         || j->hexs[1] == 0x50018000
         || j->hexs[1] == 0x50078000
         || j->hexs[1] == 0x60008000
+        || j->hexs[1] == 0x70008000
         || j->hexs[1] == 0xffff8000
         || j->hexs[1] == 0xffff0000
     );
