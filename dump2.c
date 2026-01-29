@@ -104,9 +104,9 @@ size_t make_str(char* out, const size_t out_len, const char* in, const size_t in
     if (is_buffer_all_zero(out + ret, in_len - ret) == 1)
         return ret;
     // Handle TRASH
-    out[ret] = '(';
+    out[ret] = '~';
     const size_t ret2 = strlen(out);
-    out[ret2] = ')';
+    out[ret2] = '~';
     assert(ret2 < in_len);
     assert(is_buffer_all_zero(out + ret2 + 1, in_len - ret2 - 1) == 1);
     assert(out_len > ret2);
