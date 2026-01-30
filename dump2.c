@@ -71,6 +71,7 @@ is_value((str), sizeof(str))
 
 #define STR_IS_PHI(str) \
 is_phi((str), sizeof(str))
+
 size_t make_str(char* out, const size_t out_len, const char* in, const size_t in_len)
 {
     assert(out_len > 0);
@@ -133,7 +134,7 @@ void my_print(FILE* stream, const char* name, const char* str, const size_t len,
     const int ret = is_buffer_all_zero(str + l, len - l);
     if (*buffer == 0)
     {
-        assert(l==0);
+        assert(l == 0);
         buffer[0] = ' ';
     }
     const size_t l2 = strlen(buffer);
@@ -258,7 +259,7 @@ enum MAGIC
 };
 
 
-void print_endpoint(FILE* stream, const char* name, struct endpoint* e, const size_t len, const size_t offset)
+void print_endpoint(FILE* stream, const char* name, const struct endpoint* e, const size_t len, const size_t offset)
 {
     assert(sizeof(struct endpoint) == len);
     const size_t alignment = offset % 4u;
@@ -355,7 +356,8 @@ struct patient_info /* 88 */
     uint32_t dup;
 };
 
-void print_patient_info(FILE* stream, const char* name, const struct patient_info* j, const size_t len, const size_t offset)
+void print_patient_info(FILE* stream, const char* name, const struct patient_info* j, const size_t len,
+                        const size_t offset)
 {
     assert(sizeof(struct patient_info) == len);
     const size_t alignment = offset % 4u;
@@ -386,28 +388,15 @@ void my_print7(FILE* stream, const char* name, struct str3_1* s, const size_t le
     assert(sizeof(struct str3_1) == len);
     const size_t alignment = offset % 4u;
     assert(alignment==0);
-    char buffer[512 * 4];
-    assert(len < sizeof(buffer));
+    char caltype[512 * 4];
+    char cdc[512 * 4];
+    char cc[512 * 4];
+    MAKE_STR(caltype, s->caltype);
+    MAKE_STR(cdc, s->cdc);
+    MAKE_STR(cc, s->cc);
     assert(STR_IS_VALUE(s->caltype));
     assert(STR_IS_VALUE(s->cdc)|| STR_IS_ZERO(s->cdc));
-    const size_t cc_len1 = strlen(s->cc);
-    const char* cc2 = s->cc + cc_len1 + 1;
-    const size_t cc_len2 = strlen(cc2);
-    const int ret = is_buffer_all_zero(cc2, len - cc_len1 - 1);
-    if (ret == 0)
-    {
-        // FIXME: this *really* looks like digital trash:
-        //assert(is_value(cc2, sizeof(s->cc) - cc_len1 - 1) == 1);
-    }
-    else
-    {
-        assert(STR_IS_VALUE(s->cc)||STR_IS_ZERO(s->cc));
-    }
-    fprintf(stream, "%04zx %zu %s %zu: [\n\t%03zu: %s\n\t%03zu: %s\n\t%03zu: %s\n\t]\n", offset, alignment, name,
-            len,
-            strlen(s->caltype), s->caltype,
-            strlen(s->cdc), s->cdc,
-            strlen(s->cc), s->cc);
+    fprintf(stream, "%04zx %zu %s %zu: [\n\t%s\n\t%s\n\t%s\n\t]\n", offset, alignment, name, len, caltype, cdc, cc);
 }
 
 struct study_info
@@ -422,6 +411,13 @@ struct study_info
     char requested_procedure_id[510 - 86];
 };
 
+struct hardware_id
+{
+    char id1[0x2c7E - 0x2bea - 4 * 2];
+    uint16_t padding[4];
+    char id2[0x2dec - 0x2C7E];
+};
+
 struct hardware
 {
     char dept_id[0x2BA9 - 0x2b68];
@@ -429,7 +425,7 @@ struct hardware
 
     union
     {
-        char hardware_id[0x2df0 - 0x2bea - 4];
+        struct hardware_id hardware_id;
         struct study_info tmp;
     };
 };
@@ -441,11 +437,13 @@ void print_hardware2(FILE* stream, const char* name, struct hardware* h, const s
     //MY_PRINT(stream, pinfo, dept_id);
     //MY_PRINT(stream, pinfo, dept_name);
     uint32_t magic;
-    memcpy(&magic, h->hardware_id, sizeof(magic));
+    memcpy(&magic, h->hardware_id.id1, sizeof(magic));
     // '0x4d574d' 5068621
+    const size_t ll = sizeof(struct study_info);
+    const size_t ll2 = sizeof(struct hardware_id);
+    assert(ll == ll2);
     if (magic == 0x4d574d) // ASCII 'MWM'
     {
-        const size_t ll = sizeof(struct study_info);
         assert(ll + 64 * 2 == len - 2);
         struct study_info* tmp = &h->tmp;
         assert(tmp->junk1 == 0x574D);
@@ -460,13 +458,11 @@ void print_hardware2(FILE* stream, const char* name, struct hardware* h, const s
     }
     else
     {
-        // const char* str = h->hardware_id;
-        // my_print(stream, name, str, len - 2, offset);
         assert(STR_IS_VALUE(h->dept_id)||STR_IS_ZERO(h->dept_id));
         assert(STR_IS_VALUE(h->dept_name)||STR_IS_ZERO(h->dept_name));
-        assert(STR_IS_VALUE(h->hardware_id)||STR_IS_ZERO(h->hardware_id));
-        fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%s]\n", offset, alignment, name, len, h->dept_id, h->dept_name,
-                h->hardware_id);
+        fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%s:%s]\n", offset, alignment, name, len, h->dept_id, h->dept_name,
+                h->hardware_id.id1, h->hardware_id.id2);
+        assert(STR_IS_VALUE(h->hardware_id.id1)||STR_IS_ZERO(h->hardware_id.id1));
     }
 }
 
@@ -481,10 +477,10 @@ void print_service_name(FILE* stream, const char* name, struct service_name* j, 
 {
     assert(sizeof(struct service_name) == len);
     const size_t alignment = offset % 4u;
-    if (j->four_state != 0)
-        assert(STR_IS_VALUE(j->service_name) == 1);
     if (j->four_state == 0)
         assert(STR_IS_ZERO(j->service_name) == 1);
+    else
+        assert(STR_IS_VALUE(j->service_name) == 1);
     assert(j->status == STATUS_EMPTY || j->status == STATUS_INITIALIZED);
     assert(j->four_state == FOUR_STATE_ZERO || j->four_state == FOUR_STATE_ONE || j->four_state == FOUR_STATE_THREE);
     fprintf(stream, "%04zx %zu %s %zu: [%s:%u:%u]\n", offset, alignment, name, len, j->service_name, j->status,
@@ -498,7 +494,7 @@ struct junk8
     uint32_t zeros1;
     uint32_t tri_states[2]; /* 0, 1 or 2 */
     uint32_t u[2];
-    uint32_t small_value1; // four states with only 0 & 3 ?
+    uint32_t four_state; // four states with only 0 & 3 ?
     uint32_t v;
     uint32_t zeros2;
     uint32_t w;
@@ -561,7 +557,7 @@ void print_junk8(FILE* stream, const char* name, struct junk8* j, const size_t l
         || j->u[1] == 0xffff0101
     );
     assert(j->zeros1 == 0);
-    assert(j->small_value1 == 0 || j->small_value1 == 3);
+    assert(j->four_state == FOUR_STATE_ZERO || j->four_state == FOUR_STATE_THREE);
     assert(j->zeros2 == 0);
     for (int i = 0; i < 2; ++i)
     {
