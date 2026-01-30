@@ -413,7 +413,7 @@ struct study_info
 
 struct hardware_id
 {
-    char id1[0x2c7E - 0x2bea - 4 * 2];
+    char id1[0x2c76 - 0x2bea];
     uint16_t padding[4];
     char id2[0x2dec - 0x2C7E];
 };
@@ -426,7 +426,7 @@ struct hardware
     union
     {
         struct hardware_id hardware_id;
-        struct study_info tmp;
+        struct study_info si;
     };
 };
 
@@ -445,7 +445,7 @@ void print_hardware2(FILE* stream, const char* name, struct hardware* h, const s
     if (magic == 0x4d574d) // ASCII 'MWM'
     {
         assert(ll + 64 * 2 == len - 2);
-        struct study_info* tmp = &h->tmp;
+        struct study_info* tmp = &h->si;
         assert(tmp->junk1 == 0x574D);
         assert(tmp->junk2 == 0x4D);
         assert(STR_IS_VALUE(tmp->study_instance_uid));
