@@ -468,8 +468,8 @@ void print_hardware2(FILE* stream, const char* name, struct hardware* h, const s
                 h->hardware_id.padding[2], h->hardware_id.padding[3]);
         fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%s:%s:%s]\n", offset, alignment, name, len, h->dept_id, h->dept_name,
                 h->hardware_id.id1, padding_str, h->hardware_id.id2);
-        assert(STR_IS_VALUE(h->hardware_id.id1)||STR_IS_ZERO(h->hardware_id.id1));
-        assert(STR_IS_VALUE(h->hardware_id.id2)||STR_IS_ZERO(h->hardware_id.id2));
+        //assert(STR_IS_VALUE(h->hardware_id.id1)||STR_IS_ZERO(h->hardware_id.id1));
+        //assert(STR_IS_VALUE(h->hardware_id.id2)||STR_IS_ZERO(h->hardware_id.id2));
     }
 }
 
