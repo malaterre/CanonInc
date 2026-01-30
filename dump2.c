@@ -550,6 +550,7 @@ void print_junk8(FILE* stream, const char* name, struct junk8* j, const size_t l
         || j->u[1] == 0x70001
         || j->u[1] == 0x70100
         || j->u[1] == 0x70101
+        || j->u[1] == 0xe0101
         || j->u[1] == 0x130001
         || j->u[1] == 0xffff0000
         || j->u[1] == 0xffff0001
@@ -699,6 +700,7 @@ struct info
     char dicom_ds1[0x38C4 - 0x36C0];
     char dicom_ds2[0x3AC0 - 0X38C4 + 8];
     struct junk10 junk10;
+    // gender is locale dependant (eg. ISO IR 13/87 => Shift_JIS)
     char gender[0x3B2C - 0x3AE4];
     char anatomy[0x3B70 - 0x3B2C];
     char patient_position[0x3BB4 - 0x3B70];
