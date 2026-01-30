@@ -409,22 +409,22 @@ struct study_info
     //
     uint16_t value1;
     uint16_t value2;
-    char study_instance_uid[0X2C33 - 0X2BF2];
-    char study_id[0X2C44 - 0X2C33];
-    char requested_procedure_id[510 - 86];
+    char study_instance_uid[0X2C33 - 0X2BF2]; // 65
+    char study_id[0X2C44 - 0X2C33]; // 17
+    char requested_procedure_id[510 - 86]; // 424
 };
 
 struct hardware_id
 {
-    char id1[0x2c76 - 0x2bea];
+    char id1[0x2c76 - 0x2bea]; // 140
     uint16_t padding[4];
-    char id2[0x2dec - 0x2C7E];
+    char id2[0x2dec - 0x2C7E]; // 366
 };
 
 struct hardware
 {
-    char dept_id[0x2BA9 - 0x2b68];
-    char dept_name[0x2BEA - 0x2bA9];
+    char dept_id[0x2BA9 - 0x2b68]; // 65
+    char dept_name[0x2BEA - 0x2bA9]; // 65
 
     union
     {
@@ -456,8 +456,8 @@ void print_hardware2(FILE* stream, const char* name, struct hardware* h, const s
         assert(STR_IS_VALUE(tmp->requested_procedure_id)||STR_IS_ZERO(tmp->requested_procedure_id));
         assert(tmp->value2==0|| tmp->value2==1);
         fprintf(stream, "%04zx %zu %s %zu: [MWM:%s:%s:%u,%u:%s:%s:%s]\n", offset, alignment, name, len, h->dept_id,
-                h->dept_name,
-                tmp->value1, tmp->value2, tmp->study_instance_uid, tmp->study_id, tmp->requested_procedure_id);
+                h->dept_name, tmp->value1, tmp->value2, tmp->study_instance_uid, tmp->study_id,
+                tmp->requested_procedure_id);
     }
     else
     {
