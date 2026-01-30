@@ -106,11 +106,13 @@ size_t make_str(char* out, const size_t out_len, const char* in, const size_t in
         return ret;
     // Handle TRASH
     size_t ret2 = ret;
-    do {
+    do
+    {
         out[ret2] = '~';
         ret2 = strlen(out);
         assert(ret2 < in_len);
-    } while (!is_buffer_all_zero(out + ret2 + 1, in_len - ret2 - 1));
+    }
+    while (!is_buffer_all_zero(out + ret2 + 1, in_len - ret2 - 1));
     assert(out_len > ret2);
     return ret2 + 1;
 }
@@ -453,7 +455,7 @@ void print_hardware2(FILE* stream, const char* name, struct hardware* h, const s
         assert(STR_IS_VALUE(tmp->study_id)||STR_IS_ZERO(tmp->study_id));
         assert(STR_IS_VALUE(tmp->requested_procedure_id)||STR_IS_ZERO(tmp->requested_procedure_id));
         assert(tmp->value2==0|| tmp->value2==1);
-        fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%u,%u: %s:%s:%s]\n", offset, alignment, name, len, h->dept_id,
+        fprintf(stream, "%04zx %zu %s %zu: [MWM:%s:%s:%u,%u:%s:%s:%s]\n", offset, alignment, name, len, h->dept_id,
                 h->dept_name,
                 tmp->value1, tmp->value2, tmp->study_instance_uid, tmp->study_id, tmp->requested_procedure_id);
     }
@@ -461,9 +463,13 @@ void print_hardware2(FILE* stream, const char* name, struct hardware* h, const s
     {
         assert(STR_IS_VALUE(h->dept_id)||STR_IS_ZERO(h->dept_id));
         assert(STR_IS_VALUE(h->dept_name)||STR_IS_ZERO(h->dept_name));
-        fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%s:%s]\n", offset, alignment, name, len, h->dept_id, h->dept_name,
-                h->hardware_id.id1, h->hardware_id.id2);
+        char padding_str[512];
+        sprintf(padding_str, "%x,%x,%x,%x", h->hardware_id.padding[0], h->hardware_id.padding[1],
+                h->hardware_id.padding[2], h->hardware_id.padding[3]);
+        fprintf(stream, "%04zx %zu %s %zu: [%s:%s:%s:%s:%s]\n", offset, alignment, name, len, h->dept_id, h->dept_name,
+                h->hardware_id.id1, padding_str, h->hardware_id.id2);
         assert(STR_IS_VALUE(h->hardware_id.id1)||STR_IS_ZERO(h->hardware_id.id1));
+        assert(STR_IS_VALUE(h->hardware_id.id2)||STR_IS_ZERO(h->hardware_id.id2));
     }
 }
 
